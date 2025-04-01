@@ -12,10 +12,21 @@ export interface ConsultationRecord {
     age?: string;
     email?: string;
   };
+  patientId?: string;
 }
 
 export interface ApiResponse {
   success: boolean;
   data?: any;
   error?: string;
+}
+
+export interface Patient {
+  id: string;
+  name: string;
+  dni?: string;
+  phone?: string;
+  age?: string;
+  email?: string;
+  notes?: string;
 }

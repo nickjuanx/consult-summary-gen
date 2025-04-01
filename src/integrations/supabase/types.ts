@@ -97,6 +97,7 @@ export type Database = {
           date_time: string
           id: string
           patient_data: Json | null
+          patient_id: string | null
           patient_name: string
           summary: string | null
           transcription: string | null
@@ -108,6 +109,7 @@ export type Database = {
           date_time?: string
           id?: string
           patient_data?: Json | null
+          patient_id?: string | null
           patient_name: string
           summary?: string | null
           transcription?: string | null
@@ -119,12 +121,21 @@ export type Database = {
           date_time?: string
           id?: string
           patient_data?: Json | null
+          patient_id?: string | null
           patient_name?: string
           summary?: string | null
           transcription?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consultations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_vacancies: {
         Row: {
@@ -156,6 +167,42 @@ export type Database = {
           required_skills?: string[] | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          age: string | null
+          created_at: string
+          dni: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          age?: string | null
+          created_at?: string
+          dni?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          age?: string | null
+          created_at?: string
+          dni?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          user_id?: string
         }
         Relationships: []
       }

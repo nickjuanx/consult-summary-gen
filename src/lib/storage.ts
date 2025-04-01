@@ -2,6 +2,7 @@
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
+import { savePatient } from "./patients";
 
 // Guardar consultas en Supabase
 export const saveConsultation = async (consultation: ConsultationRecord): Promise<string | null> => {
@@ -35,6 +36,24 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
       audioUrl = publicUrlData.publicUrl;
     }
     
+    // Si tenemos datos del paciente, intentamos crear/actualizar el paciente
+    let patientId: string | undefined = consultation.patientId;
+    
+    if (consultation.patientData && !patientId) {
+      // Creamos o actualizamos el paciente con los datos extraídos
+      const patientResult = await savePatient({
+        name: consultation.patientName,
+        dni: consultation.patientData.dni,
+        phone: consultation.patientData.phone,
+        age: consultation.patientData.age,
+        email: consultation.patientData.email
+      });
+      
+      if (!patientResult.error) {
+        patientId = patientResult.id;
+      }
+    }
+    
     // Guardar la consulta en la base de datos
     const { error } = await supabase
       .from('consultations')
@@ -46,7 +65,8 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
         audio_url: audioUrl,
         transcription: consultation.transcription,
         summary: consultation.summary,
-        patient_data: consultation.patientData
+        patient_data: consultation.patientData,
+        patient_id: patientId
       });
     
     if (error) {
@@ -81,7 +101,8 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
       audioUrl: item.audio_url,
       transcription: item.transcription,
       summary: item.summary,
-      patientData: item.patient_data ? convertJsonToPatientData(item.patient_data) : {}
+      patientData: item.patient_data ? convertJsonToPatientData(item.patient_data) : {},
+      patientId: item.patient_id
     })) || [];
   } catch (error) {
     console.error("Error en getConsultations:", error);
@@ -112,7 +133,8 @@ export const updateConsultation = async (consultation: ConsultationRecord): Prom
         patient_name: consultation.patientName,
         transcription: consultation.transcription,
         summary: consultation.summary,
-        patient_data: consultation.patientData
+        patient_data: consultation.patientData,
+        patient_id: consultation.patientId
       })
       .eq('id', consultation.id);
     

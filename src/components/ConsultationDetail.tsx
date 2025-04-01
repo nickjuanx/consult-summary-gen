@@ -2,12 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ConsultationRecord } from "@/types";
+import { ConsultationRecord, Patient } from "@/types";
 import { Download, Clipboard, CheckCircle2, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { getPatientById } from "@/lib/patients";
 
 interface ConsultationDetailProps {
   consultation: ConsultationRecord;
@@ -16,7 +17,22 @@ interface ConsultationDetailProps {
 
 const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) => {
   const [copied, setCopied] = useState<'transcription' | 'summary' | null>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    // Cargar datos completos del paciente si hay un ID
+    const loadPatient = async () => {
+      if (consultation.patientId) {
+        const patientData = await getPatientById(consultation.patientId);
+        if (patientData) {
+          setPatient(patientData);
+        }
+      }
+    };
+    
+    loadPatient();
+  }, [consultation.patientId]);
   
   const copyToClipboard = async (text: string, type: 'transcription' | 'summary') => {
     try {
@@ -50,6 +66,16 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     }
   };
   
+  // Usamos los datos del paciente de la consulta o los datos completos del paciente
+  const patientData = patient || {
+    id: consultation.patientId || '',
+    name: consultation.patientName,
+    dni: consultation.patientData?.dni,
+    phone: consultation.patientData?.phone,
+    age: consultation.patientData?.age,
+    email: consultation.patientData?.email
+  };
+  
   return (
     <div className="space-y-4">
       <Button variant="ghost" onClick={onBack} className="mb-2">
@@ -64,38 +90,41 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
           </CardDescription>
         </CardHeader>
         
-        {consultation.patientData && (
-          <CardContent className="pt-0">
-            <div className="flex flex-col gap-2 rounded-md bg-slate-50 p-3 text-sm">
-              <div className="flex items-center gap-2 text-slate-600">
-                <User className="h-4 w-4" />
-                <span className="font-medium">Datos Personales:</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {consultation.patientData.dni && (
-                  <div>
-                    <span className="font-medium">DNI:</span> {consultation.patientData.dni}
-                  </div>
-                )}
-                {consultation.patientData.phone && (
-                  <div>
-                    <span className="font-medium">Teléfono:</span> {consultation.patientData.phone}
-                  </div>
-                )}
-                {consultation.patientData.age && (
-                  <div>
-                    <span className="font-medium">Edad:</span> {consultation.patientData.age}
-                  </div>
-                )}
-                {consultation.patientData.email && (
-                  <div>
-                    <span className="font-medium">Email:</span> {consultation.patientData.email}
-                  </div>
-                )}
-              </div>
+        <CardContent className="pt-0">
+          <div className="flex flex-col gap-2 rounded-md bg-slate-50 p-3 text-sm">
+            <div className="flex items-center gap-2 text-slate-600">
+              <User className="h-4 w-4" />
+              <span className="font-medium">Datos Personales:</span>
             </div>
-          </CardContent>
-        )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {patientData.dni && (
+                <div>
+                  <span className="font-medium">DNI:</span> {patientData.dni}
+                </div>
+              )}
+              {patientData.phone && (
+                <div>
+                  <span className="font-medium">Teléfono:</span> {patientData.phone}
+                </div>
+              )}
+              {patientData.age && (
+                <div>
+                  <span className="font-medium">Edad:</span> {patientData.age}
+                </div>
+              )}
+              {patientData.email && (
+                <div>
+                  <span className="font-medium">Email:</span> {patientData.email}
+                </div>
+              )}
+              {patient?.notes && (
+                <div className="col-span-2">
+                  <span className="font-medium">Notas:</span> {patient.notes}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
         
         {consultation.audioUrl && (
           <CardContent>

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveConsultation } from "@/lib/storage";
 import { ConsultationRecord } from "@/types";
+import PatientSelector from "./PatientSelector";
+import { Patient } from "@/types";
 
 interface AudioRecorderProps {
   onRecordingComplete: (consultation: ConsultationRecord) => void;
@@ -19,6 +22,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
   const [patientName, setPatientName] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showPatientSelector, setShowPatientSelector] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -36,6 +41,13 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       }
     };
   }, [audioUrl]);
+
+  // Cuando se selecciona un paciente, actualizamos el nombre
+  useEffect(() => {
+    if (selectedPatient) {
+      setPatientName(selectedPatient.name);
+    }
+  }, [selectedPatient]);
 
   const startRecording = async () => {
     if (!patientName.trim()) {
@@ -147,7 +159,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         audioUrl: audioUrl || undefined,
         transcription,
         summary,
-        patientData
+        patientData,
+        patientId: selectedPatient?.id
       };
       
       await saveConsultation(newConsultation);
@@ -161,6 +174,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       setPatientName("");
       setAudioUrl(null);
+      setSelectedPatient(null);
     } catch (error) {
       console.error("Error de procesamiento:", error);
       toast({
@@ -179,21 +193,45 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handlePatientSelect = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowPatientSelector(false);
+  };
+
   return (
     <Card className="w-full">
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="patientName">Nombre del Paciente</Label>
-            <Input 
-              id="patientName"
-              placeholder="Ingrese el nombre del paciente"
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-              disabled={isRecording || isProcessing}
-              className="w-full"
-            />
+            <div className="flex items-center space-x-2">
+              <Input 
+                id="patientName"
+                placeholder="Ingrese el nombre del paciente"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                disabled={isRecording || isProcessing}
+                className="w-full"
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPatientSelector(!showPatientSelector)}
+                disabled={isRecording || isProcessing}
+              >
+                {selectedPatient ? "Cambiar" : "Buscar"}
+              </Button>
+            </div>
           </div>
+          
+          {showPatientSelector && (
+            <div className="mt-2 border rounded-md p-4 bg-gray-50">
+              <PatientSelector 
+                onPatientSelect={handlePatientSelect}
+                selectedPatientId={selectedPatient?.id}
+                initialPatientName={patientName}
+              />
+            </div>
+          )}
           
           {(isRecording || isProcessing) && (
             <div className="mt-4">
