@@ -1,3 +1,4 @@
+
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
@@ -90,12 +91,13 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
 
 // Helper function to convert JSON from Supabase to our patientData structure
 const convertJsonToPatientData = (data: Json): { dni?: string; phone?: string; age?: string; email?: string } => {
-  if (typeof data === 'object' && data !== null) {
+  if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+    const jsonObject = data as Record<string, unknown>;
     return {
-      dni: typeof data.dni === 'string' ? data.dni : undefined,
-      phone: typeof data.phone === 'string' ? data.phone : undefined,
-      age: typeof data.age === 'string' ? data.age : undefined,
-      email: typeof data.email === 'string' ? data.email : undefined
+      dni: typeof jsonObject.dni === 'string' ? jsonObject.dni : undefined,
+      phone: typeof jsonObject.phone === 'string' ? jsonObject.phone : undefined,
+      age: typeof jsonObject.age === 'string' ? jsonObject.age : undefined,
+      email: typeof jsonObject.email === 'string' ? jsonObject.email : undefined
     };
   }
   return {};
