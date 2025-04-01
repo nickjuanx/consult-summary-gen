@@ -6,6 +6,12 @@ export interface ConsultationRecord {
   audioUrl?: string;
   transcription?: string;
   summary?: string;
+  patientData?: {
+    dni?: string;
+    phone?: string;
+    age?: string;
+    email?: string;
+  };
 }
 
 export interface ApiResponse {

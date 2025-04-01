@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsultationRecord } from "@/types";
-import { Download, Clipboard, CheckCircle2 } from "lucide-react";
+import { Download, Clipboard, CheckCircle2, User } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,16 +23,16 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
       setCopied(type);
       
       toast({
-        title: "Copied to clipboard",
-        description: `The ${type} has been copied to clipboard`,
+        title: "Copiado al portapapeles",
+        description: `El ${type === 'transcription' ? 'transcripción' : 'resumen'} ha sido copiado al portapapeles`,
       });
       
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error("Failed to copy:", error);
+      console.error("Error al copiar:", error);
       toast({
-        title: "Copy failed",
-        description: "Could not copy to clipboard",
+        title: "Error al copiar",
+        description: "No se pudo copiar al portapapeles",
         variant: "destructive",
       });
     }
@@ -42,7 +42,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     if (consultation.audioUrl) {
       const a = document.createElement('a');
       a.href = consultation.audioUrl;
-      a.download = `consultation_${consultation.patientName.replace(/\s+/g, '_')}_${format(new Date(consultation.dateTime), 'yyyy-MM-dd')}.webm`;
+      a.download = `consulta_${consultation.patientName.replace(/\s+/g, '_')}_${format(new Date(consultation.dateTime), 'yyyy-MM-dd')}.webm`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -52,27 +52,61 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
   return (
     <div className="space-y-4">
       <Button variant="ghost" onClick={onBack} className="mb-2">
-        ← Back to all consultations
+        ← Volver a todas las consultas
       </Button>
       
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-xl text-medical-800">Patient: {consultation.patientName}</CardTitle>
+          <CardTitle className="text-xl text-medical-800">Paciente: {consultation.patientName}</CardTitle>
           <CardDescription>
-            Consultation on {format(new Date(consultation.dateTime), 'PPPP')} at {format(new Date(consultation.dateTime), 'p')}
+            Consulta el {format(new Date(consultation.dateTime), 'PPP', { locale: require('date-fns/locale/es') })} a las {format(new Date(consultation.dateTime), 'p')}
           </CardDescription>
         </CardHeader>
+        
+        {consultation.patientData && (
+          <CardContent className="pt-0">
+            <div className="flex flex-col gap-2 rounded-md bg-slate-50 p-3 text-sm">
+              <div className="flex items-center gap-2 text-slate-600">
+                <User className="h-4 w-4" />
+                <span className="font-medium">Datos Personales:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {consultation.patientData.dni && (
+                  <div>
+                    <span className="font-medium">DNI:</span> {consultation.patientData.dni}
+                  </div>
+                )}
+                {consultation.patientData.phone && (
+                  <div>
+                    <span className="font-medium">Teléfono:</span> {consultation.patientData.phone}
+                  </div>
+                )}
+                {consultation.patientData.age && (
+                  <div>
+                    <span className="font-medium">Edad:</span> {consultation.patientData.age}
+                  </div>
+                )}
+                {consultation.patientData.email && (
+                  <div>
+                    <span className="font-medium">Email:</span> {consultation.patientData.email}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        )}
+        
         {consultation.audioUrl && (
           <CardContent>
             <div className="my-2">
               <audio controls className="w-full">
                 <source src={consultation.audioUrl} type="audio/webm" />
-                Your browser does not support the audio element.
+                Su navegador no soporta el elemento de audio.
               </audio>
             </div>
             <Button variant="outline" onClick={downloadAudio} className="mt-2">
               <Download className="mr-2 h-4 w-4" />
-              Download Audio
+              Descargar Audio
             </Button>
           </CardContent>
         )}
@@ -80,15 +114,15 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
       
       <Tabs defaultValue="summary" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="transcription">Full Transcription</TabsTrigger>
+          <TabsTrigger value="summary">Resumen</TabsTrigger>
+          <TabsTrigger value="transcription">Transcripción Completa</TabsTrigger>
         </TabsList>
         
         <TabsContent value="summary">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg text-medical-800 flex justify-between items-center">
-                <span>Consultation Summary</span>
+                <span>Resumen de la Consulta</span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -114,7 +148,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
           <Card>
             <CardHeader>
               <CardTitle className="text-lg text-medical-800 flex justify-between items-center">
-                <span>Full Transcription</span>
+                <span>Transcripción Completa</span>
                 <Button 
                   variant="ghost" 
                   size="sm" 

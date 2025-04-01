@@ -42,8 +42,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
   const startRecording = async () => {
     if (!patientName.trim()) {
       toast({
-        title: "Patient Name Required",
-        description: "Please enter the patient's name before recording",
+        title: "Nombre del paciente requerido",
+        description: "Por favor ingrese el nombre del paciente antes de grabar",
         variant: "destructive",
       });
       return;
@@ -51,8 +51,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
 
     if (!groqApi.hasApiKey()) {
       toast({
-        title: "API Key Required",
-        description: "Please configure the Groq API key first",
+        title: "API Key Requerida",
+        description: "Por favor configure la API key de Groq primero",
         variant: "destructive",
       });
       return;
@@ -93,14 +93,14 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       }, 1000);
       
       toast({
-        title: "Recording Started",
-        description: "The consultation is now being recorded",
+        title: "Grabación Iniciada",
+        description: "La consulta está siendo grabada",
       });
     } catch (error) {
-      console.error("Error accessing microphone:", error);
+      console.error("Error al acceder al micrófono:", error);
       toast({
-        title: "Microphone Error",
-        description: "Could not access the microphone. Please check permissions.",
+        title: "Error de Micrófono",
+        description: "No se pudo acceder al micrófono. Por favor verifique los permisos.",
         variant: "destructive",
       });
     }
@@ -117,8 +117,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       }
       
       toast({
-        title: "Recording Stopped",
-        description: "Processing your consultation...",
+        title: "Grabación Detenida",
+        description: "Procesando su consulta...",
       });
     }
   };
@@ -127,53 +127,57 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
     setIsProcessing(true);
     
     try {
-      // Step 1: Transcribe the audio
+      // Paso 1: Transcribir el audio
       const transcriptionResponse = await groqApi.transcribeAudio(audioBlob);
       
       if (!transcriptionResponse.success) {
-        throw new Error(transcriptionResponse.error || "Transcription failed");
+        throw new Error(transcriptionResponse.error || "La transcripción falló");
       }
       
       const transcription = transcriptionResponse.data.text;
       
-      // Step 2: Generate summary from transcription
+      // Paso 2: Generar resumen a partir de la transcripción
       const summaryResponse = await groqApi.generateSummary(transcription);
       
       if (!summaryResponse.success) {
-        throw new Error(summaryResponse.error || "Summary generation failed");
+        throw new Error(summaryResponse.error || "La generación del resumen falló");
       }
       
       const summary = summaryResponse.data.choices[0].message.content;
       
-      // Create new consultation record
+      // Paso 3: Extraer datos personales del resumen
+      const patientData = groqApi.extractPatientData(summary);
+      
+      // Crear nuevo registro de consulta
       const newConsultation: ConsultationRecord = {
         id: Date.now().toString(),
         patientName: patientName.trim(),
         dateTime: new Date().toISOString(),
         audioUrl: audioUrl || undefined,
         transcription,
-        summary
+        summary,
+        patientData
       };
       
-      // Add to storage
+      // Agregar al almacenamiento
       addConsultation(newConsultation);
       
-      // Pass to parent component
+      // Pasar al componente padre
       onRecordingComplete(newConsultation);
       
       toast({
-        title: "Consultation Processed",
-        description: "Transcription and summary are ready",
+        title: "Consulta Procesada",
+        description: "La transcripción y el resumen están listos",
       });
       
-      // Reset form
+      // Reiniciar formulario
       setPatientName("");
       setAudioUrl(null);
     } catch (error) {
-      console.error("Processing error:", error);
+      console.error("Error de procesamiento:", error);
       toast({
-        title: "Processing Error",
-        description: error instanceof Error ? error.message : "Failed to process the recording",
+        title: "Error de Procesamiento",
+        description: error instanceof Error ? error.message : "No se pudo procesar la grabación",
         variant: "destructive",
       });
     } finally {
@@ -192,10 +196,10 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="patientName">Patient Name</Label>
+            <Label htmlFor="patientName">Nombre del Paciente</Label>
             <Input 
               id="patientName"
-              placeholder="Enter patient name"
+              placeholder="Ingrese el nombre del paciente"
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
               disabled={isRecording || isProcessing}
@@ -208,12 +212,12 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
               {isRecording ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse-recording"></div>
-                  <span className="text-red-600 font-medium">Recording: {formatTime(recordingTime)}</span>
+                  <span className="text-red-600 font-medium">Grabando: {formatTime(recordingTime)}</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin text-medical-600" />
-                  <span className="text-medical-600 font-medium">Processing consultation...</span>
+                  <span className="text-medical-600 font-medium">Procesando consulta...</span>
                 </div>
               )}
               <div className="waveform mt-2"></div>
@@ -229,7 +233,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
                 className="w-full sm:w-auto"
               >
                 <Square className="mr-2 h-4 w-4" />
-                Stop Recording
+                Detener Grabación
               </Button>
             ) : (
               <Button 
@@ -240,7 +244,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
                 className="w-full sm:w-auto bg-medical-600 hover:bg-medical-700"
               >
                 <Mic className="mr-2 h-4 w-4" />
-                Start Recording
+                Iniciar Grabación
               </Button>
             )}
           </div>
