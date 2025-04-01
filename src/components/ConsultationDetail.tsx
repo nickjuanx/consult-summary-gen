@@ -6,6 +6,7 @@ import { ConsultationRecord } from "@/types";
 import { Download, Clipboard, CheckCircle2, User } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ConsultationDetailProps {
@@ -59,7 +60,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
         <CardHeader>
           <CardTitle className="text-xl text-medical-800">Paciente: {consultation.patientName}</CardTitle>
           <CardDescription>
-            Consulta el {format(new Date(consultation.dateTime), 'PPP', { locale: require('date-fns/locale/es') })} a las {format(new Date(consultation.dateTime), 'p')}
+            Consulta el {format(new Date(consultation.dateTime), 'PPP', { locale: es })} a las {format(new Date(consultation.dateTime), 'p')}
           </CardDescription>
         </CardHeader>
         
@@ -126,7 +127,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => copyToClipboard(consultation.summary || '', 'summary')}
+                  onClick={() => consultation.summary && copyToClipboard(consultation.summary, 'summary')}
                 >
                   {copied === 'summary' ? (
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -138,7 +139,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none">
-                <p className="whitespace-pre-line">{consultation.summary}</p>
+                <p className="whitespace-pre-line">{consultation.summary || "No hay resumen disponible"}</p>
               </div>
             </CardContent>
           </Card>
@@ -152,7 +153,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => copyToClipboard(consultation.transcription || '', 'transcription')}
+                  onClick={() => consultation.transcription && copyToClipboard(consultation.transcription, 'transcription')}
                 >
                   {copied === 'transcription' ? (
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -164,7 +165,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none">
-                <p className="whitespace-pre-line">{consultation.transcription}</p>
+                <p className="whitespace-pre-line">{consultation.transcription || "No hay transcripción disponible"}</p>
               </div>
             </CardContent>
           </Card>

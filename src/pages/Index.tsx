@@ -50,7 +50,7 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-5 space-y-6">
                 <div>
-                  <h2 className="text-xl font-medium text-medical-900 mb-4">New Consultation</h2>
+                  <h2 className="text-xl font-medium text-medical-900 mb-4">Nueva Consulta</h2>
                   <AudioRecorder onRecordingComplete={handleRecordingComplete} />
                 </div>
               </div>
@@ -66,7 +66,7 @@ const Index = () => {
       <footer className="border-t py-4 md:py-6">
         <div className="container">
           <p className="text-center text-sm text-gray-500">
-            ConsultSummary — Medical Transcription & Summarization Tool
+            ConsultSummary — Herramienta de Transcripción y Resumen Médico
           </p>
         </div>
       </footer>

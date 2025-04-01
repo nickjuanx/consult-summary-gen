@@ -37,8 +37,8 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
     setDeleteId(null);
     
     toast({
-      title: "Consultation Deleted",
-      description: "The consultation has been removed",
+      title: "Consulta Eliminada",
+      description: "La consulta ha sido eliminada correctamente",
     });
   };
 
@@ -48,9 +48,9 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
         <CardContent className="pt-6">
           <div className="text-center p-6">
             <FileAudio className="h-12 w-12 text-medical-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No consultations yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No hay consultas aún</h3>
             <p className="text-gray-500">
-              Record your first patient consultation to get started.
+              Graba tu primera consulta médica para comenzar.
             </p>
           </div>
         </CardContent>
@@ -60,7 +60,7 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-medium text-medical-900">Recent Consultations</h2>
+      <h2 className="text-xl font-medium text-medical-900">Consultas Recientes</h2>
       
       {consultations.map((consultation) => (
         <Card key={consultation.id} className="overflow-hidden">
@@ -71,7 +71,7 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
                   {consultation.patientName}
                 </CardTitle>
                 <CardDescription>
-                  {format(new Date(consultation.dateTime), 'PPP')} at {format(new Date(consultation.dateTime), 'p')}
+                  {format(new Date(consultation.dateTime), 'PPP')} a las {format(new Date(consultation.dateTime), 'p')}
                 </CardDescription>
               </div>
               <Button
@@ -98,7 +98,7 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
               className="p-0 h-auto text-medical-600 hover:text-medical-800"
               onClick={() => onConsultationSelect(consultation)}
             >
-              View details <ArrowRight className="ml-1 h-3 w-3" />
+              Ver detalles <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </CardContent>
         </Card>
@@ -107,18 +107,18 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the consultation record and cannot be undone.
+              Esto eliminará permanentemente el registro de la consulta y no se podrá deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               className="bg-red-600 hover:bg-red-700" 
               onClick={() => deleteId && handleDelete(deleteId)}
             >
-              Delete
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
