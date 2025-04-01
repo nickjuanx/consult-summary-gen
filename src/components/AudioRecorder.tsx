@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { groqApi } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { addConsultation } from "@/lib/storage";
+import { saveConsultation } from "@/lib/storage";
 import { ConsultationRecord } from "@/types";
 
 interface AudioRecorderProps {
@@ -28,7 +27,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
 
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
@@ -76,18 +74,15 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
         
-        // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
         
         await processRecording(audioBlob);
       };
       
-      // Start recording
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
       
-      // Start timer
       timerRef.current = window.setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -127,7 +122,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
     setIsProcessing(true);
     
     try {
-      // Paso 1: Transcribir el audio
       const transcriptionResponse = await groqApi.transcribeAudio(audioBlob);
       
       if (!transcriptionResponse.success) {
@@ -136,7 +130,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       const transcription = transcriptionResponse.data.text;
       
-      // Paso 2: Generar resumen a partir de la transcripción
       const summaryResponse = await groqApi.generateSummary(transcription);
       
       if (!summaryResponse.success) {
@@ -145,10 +138,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       const summary = summaryResponse.data.choices[0].message.content;
       
-      // Paso 3: Extraer datos personales del resumen
       const patientData = groqApi.extractPatientData(summary);
       
-      // Crear nuevo registro de consulta
       const newConsultation: ConsultationRecord = {
         id: Date.now().toString(),
         patientName: patientName.trim(),
@@ -159,10 +150,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         patientData
       };
       
-      // Agregar al almacenamiento
-      addConsultation(newConsultation);
+      await saveConsultation(newConsultation);
       
-      // Pasar al componente padre
       onRecordingComplete(newConsultation);
       
       toast({
@@ -170,7 +159,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         description: "La transcripción y el resumen están listos",
       });
       
-      // Reiniciar formulario
       setPatientName("");
       setAudioUrl(null);
     } catch (error) {
