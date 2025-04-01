@@ -1,7 +1,8 @@
 
 import { ApiResponse } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
-// This class would need the actual API key from Groq
+// Esta clase usará la API key compartida desde Supabase
 export class GroqApiService {
   private apiKey: string | null = null;
   private baseUrl = "https://api.groq.com/openai/v1";
@@ -9,6 +10,26 @@ export class GroqApiService {
   constructor(apiKey?: string) {
     if (apiKey) {
       this.apiKey = apiKey;
+    }
+  }
+
+  async fetchSharedApiKey(): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('shared_api_keys')
+        .select('api_key')
+        .eq('service_name', 'groq')
+        .single();
+
+      if (error) {
+        console.error("Error al obtener la clave API compartida:", error);
+        return null;
+      }
+
+      return data?.api_key || null;
+    } catch (error) {
+      console.error("Error en fetchSharedApiKey:", error);
+      return null;
     }
   }
 
@@ -26,8 +47,14 @@ export class GroqApiService {
 
   // Transcribe audio using Whisper
   async transcribeAudio(audioBlob: Blob): Promise<ApiResponse> {
+    // Si no hay API key, intentar obtenerla de Supabase
     if (!this.hasApiKey()) {
-      return { success: false, error: "API key not set" };
+      const sharedKey = await this.fetchSharedApiKey();
+      if (sharedKey) {
+        this.setApiKey(sharedKey);
+      } else {
+        return { success: false, error: "No se pudo obtener la clave API" };
+      }
     }
 
     try {
@@ -59,8 +86,14 @@ export class GroqApiService {
 
   // Generate summary using Groq's LLM
   async generateSummary(transcription: string): Promise<ApiResponse> {
+    // Si no hay API key, intentar obtenerla de Supabase
     if (!this.hasApiKey()) {
-      return { success: false, error: "API key not set" };
+      const sharedKey = await this.fetchSharedApiKey();
+      if (sharedKey) {
+        this.setApiKey(sharedKey);
+      } else {
+        return { success: false, error: "No se pudo obtener la clave API" };
+      }
     }
 
     try {

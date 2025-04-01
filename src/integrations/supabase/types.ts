@@ -90,6 +90,42 @@ export type Database = {
         }
         Relationships: []
       }
+      consultations: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          date_time: string
+          id: string
+          patient_data: Json | null
+          patient_name: string
+          summary: string | null
+          transcription: string | null
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          date_time?: string
+          id?: string
+          patient_data?: Json | null
+          patient_name: string
+          summary?: string | null
+          transcription?: string | null
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          date_time?: string
+          id?: string
+          patient_data?: Json | null
+          patient_name?: string
+          summary?: string | null
+          transcription?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_vacancies: {
         Row: {
           created_at: string | null
@@ -207,6 +243,45 @@ export type Database = {
           name?: string
           price?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      shared_api_keys: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          service_name: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          service_name: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          service_name?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
         }
         Relationships: []
       }
