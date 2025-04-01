@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, MicOff, User, LogOut } from "lucide-react";
 import ApiKeyDialog from "./ApiKeyDialog";

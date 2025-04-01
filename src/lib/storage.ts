@@ -1,6 +1,6 @@
-
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 // Guardar consultas en Supabase
 export const saveConsultation = async (consultation: ConsultationRecord): Promise<string | null> => {
@@ -80,12 +80,25 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
       audioUrl: item.audio_url,
       transcription: item.transcription,
       summary: item.summary,
-      patientData: item.patient_data
+      patientData: item.patient_data ? convertJsonToPatientData(item.patient_data) : {}
     })) || [];
   } catch (error) {
     console.error("Error en getConsultations:", error);
     return [];
   }
+};
+
+// Helper function to convert JSON from Supabase to our patientData structure
+const convertJsonToPatientData = (data: Json): { dni?: string; phone?: string; age?: string; email?: string } => {
+  if (typeof data === 'object' && data !== null) {
+    return {
+      dni: typeof data.dni === 'string' ? data.dni : undefined,
+      phone: typeof data.phone === 'string' ? data.phone : undefined,
+      age: typeof data.age === 'string' ? data.age : undefined,
+      email: typeof data.email === 'string' ? data.email : undefined
+    };
+  }
+  return {};
 };
 
 // Actualizar una consulta existente
