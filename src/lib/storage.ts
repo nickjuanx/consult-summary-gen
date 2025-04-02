@@ -1,7 +1,6 @@
 
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 import { savePatient } from "./patients";
 
 // Guardar consultas en Supabase
@@ -101,7 +100,7 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
       audioUrl: item.audio_url,
       transcription: item.transcription,
       summary: item.summary,
-      patientData: item.patient_data ? convertJsonToPatientData(item.patient_data) : {},
+      patientData: item.patient_data || {},
       patientId: item.patient_id
     })) || [];
   } catch (error) {
@@ -111,14 +110,13 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
 };
 
 // Helper function to convert JSON from Supabase to our patientData structure
-const convertJsonToPatientData = (data: Json): { dni?: string; phone?: string; age?: string; email?: string } => {
+const convertJsonToPatientData = (data: any): { dni?: string; phone?: string; age?: string; email?: string } => {
   if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-    const jsonObject = data as Record<string, unknown>;
     return {
-      dni: typeof jsonObject.dni === 'string' ? jsonObject.dni : undefined,
-      phone: typeof jsonObject.phone === 'string' ? jsonObject.phone : undefined,
-      age: typeof jsonObject.age === 'string' ? jsonObject.age : undefined,
-      email: typeof jsonObject.email === 'string' ? jsonObject.email : undefined
+      dni: typeof data.dni === 'string' ? data.dni : undefined,
+      phone: typeof data.phone === 'string' ? data.phone : undefined,
+      age: typeof data.age === 'string' ? data.age : undefined,
+      email: typeof data.email === 'string' ? data.email : undefined
     };
   }
   return {};
