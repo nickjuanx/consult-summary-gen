@@ -100,7 +100,7 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
       audioUrl: item.audio_url,
       transcription: item.transcription,
       summary: item.summary,
-      patientData: item.patient_data || {},
+      patientData: processPatientData(item.patient_data),
       patientId: item.patient_id
     })) || [];
   } catch (error) {
@@ -109,8 +109,10 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
   }
 };
 
-// Helper function to convert JSON from Supabase to our patientData structure
-const convertJsonToPatientData = (data: any): { dni?: string; phone?: string; age?: string; email?: string } => {
+// Helper function to process and type-cast patient data from Supabase
+const processPatientData = (data: any): { dni?: string; phone?: string; age?: string; email?: string } => {
+  if (!data) return {};
+  
   if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
     return {
       dni: typeof data.dni === 'string' ? data.dni : undefined,
@@ -119,6 +121,7 @@ const convertJsonToPatientData = (data: any): { dni?: string; phone?: string; ag
       email: typeof data.email === 'string' ? data.email : undefined
     };
   }
+  
   return {};
 };
 
