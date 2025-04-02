@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
-import { Calendar, FileText, Clock } from "lucide-react";
+import { Calendar, FileText, Clock, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
