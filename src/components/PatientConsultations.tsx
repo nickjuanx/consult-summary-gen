@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ConsultationRecord } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { getConsultationsByPatient } from "@/lib/storage";
@@ -28,22 +28,32 @@ interface PatientConsultationsProps {
 const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
 
+  // Add some console logging to help debug
+  console.log("PatientConsultations - Patient ID:", patientId);
+
   const { 
     data: consultations = [], 
     isLoading, 
-    error
+    error,
+    refetch
   } = useQuery({
     queryKey: ['consultations', patientId],
     queryFn: () => getConsultationsByPatient(patientId),
     enabled: !!patientId,
   });
 
+  // Log the consultations that were fetched
+  useEffect(() => {
+    console.log("Consultations fetched:", consultations);
+  }, [consultations]);
+
   if (isLoading) {
     return <div className="text-center py-4">Cargando historial de consultas...</div>;
   }
 
   if (error) {
-    return <div className="text-center py-4 text-red-500">Error al cargar historial</div>;
+    console.error("Error fetching consultations:", error);
+    return <div className="text-center py-4 text-red-500">Error al cargar historial: {String(error)}</div>;
   }
 
   if (consultations.length === 0) {

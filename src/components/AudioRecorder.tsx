@@ -152,6 +152,12 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       const patientData = groqApi.extractPatientData(summary);
       
+      // Log the patient information to debug linking issues
+      console.log("Creating consultation with patient info:", {
+        patientName: patientName.trim(),
+        patientId: selectedPatient?.id
+      });
+      
       const newConsultation: ConsultationRecord = {
         id: Date.now().toString(),
         patientName: patientName.trim(),
@@ -162,6 +168,8 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         patientData,
         patientId: selectedPatient?.id
       };
+      
+      console.log("Saving consultation with data:", newConsultation);
       
       await saveConsultation(newConsultation);
       

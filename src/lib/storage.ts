@@ -1,3 +1,4 @@
+
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { savePatient } from "./patients";
@@ -111,6 +112,8 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
 // Obtener consultas por paciente
 export const getConsultationsByPatient = async (patientId: string): Promise<ConsultationRecord[]> => {
   try {
+    console.log("Getting consultations for patient ID:", patientId);
+    
     const { data, error } = await supabase
       .from('consultations')
       .select('*')
@@ -121,6 +124,8 @@ export const getConsultationsByPatient = async (patientId: string): Promise<Cons
       console.error("Error al obtener consultas del paciente:", error);
       return [];
     }
+    
+    console.log("Consultations retrieved from DB:", data);
     
     return data.map(item => ({
       id: item.id,
