@@ -6,7 +6,7 @@ import { getPatients, deletePatient } from "@/lib/patients";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPlus, Search, Trash2, Phone, Mail, FileText } from "lucide-react";
+import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { savePatient } from "@/lib/patients";
+import PatientConsultations from "@/components/PatientConsultations";
 
 const PatientsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,6 +30,7 @@ const PatientsList = () => {
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { 
@@ -132,6 +134,14 @@ const PatientsList = () => {
       notes: ""
     });
     setShowNewPatientDialog(true);
+  };
+
+  const togglePatientExpand = (patientId: string) => {
+    if (expandedPatient === patientId) {
+      setExpandedPatient(null);
+    } else {
+      setExpandedPatient(patientId);
+    }
   };
 
   if (isLoading) {
@@ -243,6 +253,33 @@ const PatientsList = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  <div className="mt-3 flex justify-between items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => togglePatientExpand(patient.id)}
+                      className="text-sm text-gray-600 flex items-center -ml-2"
+                    >
+                      {expandedPatient === patient.id ? (
+                        <>
+                          <ChevronUp className="h-4 w-4 mr-1" />
+                          Ocultar historial
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4 mr-1" />
+                          Ver historial de consultas
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {expandedPatient === patient.id && (
+                    <div className="mt-4 pt-4 border-t">
+                      <PatientConsultations patientId={patient.id} />
+                    </div>
+                  )}
                 </div>
               ))
             )}

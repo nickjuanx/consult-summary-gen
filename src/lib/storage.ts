@@ -1,4 +1,3 @@
-
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { savePatient } from "./patients";
@@ -105,6 +104,36 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
     })) || [];
   } catch (error) {
     console.error("Error en getConsultations:", error);
+    return [];
+  }
+};
+
+// Obtener consultas por paciente
+export const getConsultationsByPatient = async (patientId: string): Promise<ConsultationRecord[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('consultations')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('date_time', { ascending: false });
+    
+    if (error) {
+      console.error("Error al obtener consultas del paciente:", error);
+      return [];
+    }
+    
+    return data.map(item => ({
+      id: item.id,
+      patientName: item.patient_name,
+      dateTime: item.date_time,
+      audioUrl: item.audio_url,
+      transcription: item.transcription,
+      summary: item.summary,
+      patientData: processPatientData(item.patient_data),
+      patientId: item.patient_id
+    })) || [];
+  } catch (error) {
+    console.error("Error en getConsultationsByPatient:", error);
     return [];
   }
 };
