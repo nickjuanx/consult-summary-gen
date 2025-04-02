@@ -8,13 +8,14 @@ export const ensureConsultationAudiosBucket = async (): Promise<void> => {
     
     if (bucketError) {
       console.error("Error listing storage buckets:", bucketError);
-      return;
+      throw bucketError;
     }
     
     const bucketExists = buckets.some(bucket => bucket.name === 'consultation-audios');
     
     // Create bucket if it doesn't exist
     if (!bucketExists) {
+      console.log("Creating consultation-audios bucket...");
       const { error: createError } = await supabase.storage.createBucket('consultation-audios', {
         public: true,
         fileSizeLimit: 52428800, // 50MB limit
@@ -22,11 +23,17 @@ export const ensureConsultationAudiosBucket = async (): Promise<void> => {
       
       if (createError) {
         console.error("Error creating consultation-audios bucket:", createError);
+        throw createError;
       } else {
         console.log("Successfully created consultation-audios bucket");
       }
+    } else {
+      console.log("consultation-audios bucket already exists");
     }
+    
+    return Promise.resolve();
   } catch (error) {
     console.error("Error ensuring consultation-audios bucket:", error);
+    throw error;
   }
 };

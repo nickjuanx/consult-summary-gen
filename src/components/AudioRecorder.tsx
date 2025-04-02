@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -132,6 +133,18 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
     setIsProcessing(true);
     
     try {
+      // Ensure the audio blob is valid
+      if (!audioBlob || audioBlob.size === 0) {
+        throw new Error("El archivo de audio está vacío");
+      }
+      
+      console.log("Processing audio blob:", {
+        size: audioBlob.size,
+        type: audioBlob.type,
+        patientName,
+        selectedPatientId: selectedPatient?.id
+      });
+      
       const transcriptionResponse = await groqApi.transcribeAudio(audioBlob);
       
       if (!transcriptionResponse.success) {
@@ -139,6 +152,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       }
       
       const transcription = transcriptionResponse.data.text;
+      console.log("Transcription completed successfully, length:", transcription.length);
       
       const summaryResponse = await groqApi.generateSummary(transcription);
       
@@ -147,6 +161,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       }
       
       const summary = summaryResponse.data.choices[0].message.content;
+      console.log("Summary generated successfully, length:", summary.length);
       
       const patientData = groqApi.extractPatientData(summary);
       
@@ -155,7 +170,7 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         patientId: selectedPatient?.id || "NO_PATIENT_SELECTED"
       });
       
-      const consultationId = Date.now().toString();
+      const consultationId = crypto.randomUUID();
       
       const newConsultation: ConsultationRecord = {
         id: consultationId,
@@ -168,7 +183,12 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
         patientId: selectedPatient?.id
       };
       
-      console.log("Saving consultation with data:", newConsultation);
+      console.log("Saving consultation with data:", {
+        id: newConsultation.id,
+        patientName: newConsultation.patientName,
+        hasPatientId: !!newConsultation.patientId,
+        audioUrlType: typeof newConsultation.audioUrl
+      });
       
       const saveError = await saveConsultation(newConsultation);
       

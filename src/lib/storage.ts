@@ -1,4 +1,3 @@
-
 import { ConsultationRecord } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { savePatient } from "./patients";
@@ -6,39 +5,60 @@ import { savePatient } from "./patients";
 // Guardar consultas en Supabase
 export const saveConsultation = async (consultation: ConsultationRecord): Promise<string | null> => {
   try {
+    console.log("saveConsultation starting for consultation:", consultation.id);
+    
     // Primero guardamos el audio si existe
     let audioUrl = consultation.audioUrl;
     
     if (audioUrl && audioUrl.startsWith('blob:')) {
+      console.log("Processing blob audio URL");
       // Convertir blob URL a File/Blob para subir a Supabase Storage
-      const response = await fetch(audioUrl);
-      const blob = await response.blob();
-      
-      const fileName = `${consultation.id}.webm`;
-      const { data, error } = await supabase.storage
-        .from('consultation-audios')
-        .upload(fileName, blob, {
-          contentType: 'audio/webm',
-          cacheControl: '3600',
-        });
-      
-      if (error) {
-        console.error("Error al subir el audio:", error);
-        return "Error al guardar el audio";
+      try {
+        const response = await fetch(audioUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch blob: ${response.status} ${response.statusText}`);
+        }
+        
+        const blob = await response.blob();
+        console.log("Audio blob fetched successfully, size:", blob.size);
+        
+        const fileName = `${consultation.id}.webm`;
+        console.log("Uploading audio to Supabase Storage:", fileName);
+        
+        const { data, error } = await supabase.storage
+          .from('consultation-audios')
+          .upload(fileName, blob, {
+            contentType: 'audio/webm',
+            cacheControl: '3600',
+          });
+        
+        if (error) {
+          console.error("Error al subir el audio:", error);
+          throw error;
+        }
+        
+        console.log("Audio uploaded successfully:", data?.path);
+        
+        // Obtener URL pública del audio
+        const { data: publicUrlData } = supabase.storage
+          .from('consultation-audios')
+          .getPublicUrl(fileName);
+        
+        audioUrl = publicUrlData.publicUrl;
+        console.log("Audio public URL:", audioUrl);
+      } catch (audioError) {
+        console.error("Error processing audio:", audioError);
+        // Continue with the consultation save even if audio upload fails
+        audioUrl = null;
       }
-      
-      // Obtener URL pública del audio
-      const { data: publicUrlData } = supabase.storage
-        .from('consultation-audios')
-        .getPublicUrl(fileName);
-      
-      audioUrl = publicUrlData.publicUrl;
     }
     
     // Si tenemos datos del paciente, intentamos crear/actualizar el paciente
     let patientId = consultation.patientId;
+    console.log("Initial patient ID:", patientId);
     
     if (consultation.patientData && !patientId) {
+      console.log("Attempting to save patient data:", consultation.patientData);
       // Creamos o actualizamos el paciente con los datos extraídos
       const patientResult = await savePatient({
         name: consultation.patientName,
@@ -51,6 +71,8 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
       if (!patientResult.error) {
         patientId = patientResult.id;
         console.log("Linking consultation to new patient with ID:", patientId);
+      } else {
+        console.error("Error saving patient:", patientResult.error);
       }
     }
     
@@ -58,12 +80,20 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
     const validPatientId = patientId ? patientId : null;
     console.log("Final patient ID for consultation:", validPatientId);
     
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("No se pudo obtener el usuario actual");
+    }
+    
+    console.log("Current user ID:", user.id);
+    
     // Guardar la consulta en la base de datos
     const { error } = await supabase
       .from('consultations')
       .insert({
         id: consultation.id,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: user.id,
         patient_name: consultation.patientName,
         date_time: consultation.dateTime,
         audio_url: audioUrl,
@@ -75,14 +105,14 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
     
     if (error) {
       console.error("Error al guardar la consulta:", error);
-      return "Error al guardar la consulta";
+      throw error;
     }
     
     console.log("Consultation saved successfully with ID:", consultation.id);
     return null; // Sin errores
   } catch (error) {
     console.error("Error en saveConsultation:", error);
-    return "Error al guardar la consulta";
+    return error instanceof Error ? error.message : "Error al guardar la consulta";
   }
 };
 
@@ -136,7 +166,7 @@ export const getConsultationsByPatient = async (patientId: string): Promise<Cons
       return [];
     }
     
-    console.log("Consultations retrieved from DB:", data);
+    console.log(`Retrieved ${data?.length || 0} consultations for patient:`, patientId);
     
     return data.map(item => ({
       id: item.id,

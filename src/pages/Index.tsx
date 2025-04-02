@@ -9,12 +9,14 @@ import { ConsultationRecord } from "@/types";
 import { groqApi } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ensureConsultationAudiosBucket } from "@/lib/ensureStorageBucket";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
   const [newConsultation, setNewConsultation] = useState<ConsultationRecord | null>(null);
   const [showNewConsultation, setShowNewConsultation] = useState(false);
   const [activeTab, setActiveTab] = useState("consultas");
+  const { toast } = useToast();
 
   useEffect(() => {
     // Try to load API key from localStorage on component mount
@@ -24,10 +26,20 @@ const Index = () => {
     }
     
     // Ensure the storage bucket exists
-    ensureConsultationAudiosBucket().catch(console.error);
-  }, []);
+    ensureConsultationAudiosBucket().then(() => {
+      console.log("Storage bucket check completed");
+    }).catch(error => {
+      console.error("Error setting up storage bucket:", error);
+      toast({
+        title: "Error de configuración",
+        description: "No se pudo inicializar el almacenamiento. Algunas funciones pueden no estar disponibles.",
+        variant: "destructive",
+      });
+    });
+  }, [toast]);
 
   const handleRecordingComplete = (consultation: ConsultationRecord) => {
+    console.log("Recording complete, displaying consultation:", consultation.id);
     setNewConsultation(consultation);
     setShowNewConsultation(true);
   };
