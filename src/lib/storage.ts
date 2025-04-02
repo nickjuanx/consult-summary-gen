@@ -36,7 +36,7 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
     }
     
     // Si tenemos datos del paciente, intentamos crear/actualizar el paciente
-    let patientId: string | undefined = consultation.patientId;
+    let patientId = consultation.patientId;
     
     if (consultation.patientData && !patientId) {
       // Creamos o actualizamos el paciente con los datos extraídos
@@ -50,8 +50,13 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
       
       if (!patientResult.error) {
         patientId = patientResult.id;
+        console.log("Linking consultation to new patient with ID:", patientId);
       }
     }
+    
+    // Aseguramos que patientId sea un UUID válido o null
+    const validPatientId = patientId ? patientId : null;
+    console.log("Final patient ID for consultation:", validPatientId);
     
     // Guardar la consulta en la base de datos
     const { error } = await supabase
@@ -65,7 +70,7 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
         transcription: consultation.transcription,
         summary: consultation.summary,
         patient_data: consultation.patientData,
-        patient_id: patientId
+        patient_id: validPatientId
       });
     
     if (error) {
@@ -73,6 +78,7 @@ export const saveConsultation = async (consultation: ConsultationRecord): Promis
       return "Error al guardar la consulta";
     }
     
+    console.log("Consultation saved successfully with ID:", consultation.id);
     return null; // Sin errores
   } catch (error) {
     console.error("Error en saveConsultation:", error);
@@ -113,6 +119,11 @@ export const getConsultations = async (): Promise<ConsultationRecord[]> => {
 export const getConsultationsByPatient = async (patientId: string): Promise<ConsultationRecord[]> => {
   try {
     console.log("Getting consultations for patient ID:", patientId);
+    
+    if (!patientId) {
+      console.error("Patient ID is undefined or null");
+      return [];
+    }
     
     const { data, error } = await supabase
       .from('consultations')

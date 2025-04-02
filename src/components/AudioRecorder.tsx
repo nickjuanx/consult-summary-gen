@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +41,6 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
     };
   }, [audioUrl]);
 
-  // Cuando se selecciona un paciente, actualizamos el nombre
   useEffect(() => {
     if (selectedPatient) {
       setPatientName(selectedPatient.name);
@@ -152,14 +150,15 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       const patientData = groqApi.extractPatientData(summary);
       
-      // Log the patient information to debug linking issues
       console.log("Creating consultation with patient info:", {
         patientName: patientName.trim(),
-        patientId: selectedPatient?.id
+        patientId: selectedPatient?.id || "NO_PATIENT_SELECTED"
       });
       
+      const consultationId = Date.now().toString();
+      
       const newConsultation: ConsultationRecord = {
-        id: Date.now().toString(),
+        id: consultationId,
         patientName: patientName.trim(),
         dateTime: new Date().toISOString(),
         audioUrl: audioUrl || undefined,
@@ -171,7 +170,13 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
       
       console.log("Saving consultation with data:", newConsultation);
       
-      await saveConsultation(newConsultation);
+      const saveError = await saveConsultation(newConsultation);
+      
+      if (saveError) {
+        throw new Error(saveError);
+      }
+      
+      console.log("Consultation saved successfully:", consultationId);
       
       onRecordingComplete(newConsultation);
       

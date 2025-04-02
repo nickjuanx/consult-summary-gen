@@ -8,6 +8,7 @@ import PatientsList from "@/components/PatientsList";
 import { ConsultationRecord } from "@/types";
 import { groqApi } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ensureConsultationAudiosBucket } from "@/lib/ensureStorageBucket";
 
 const Index = () => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
@@ -21,6 +22,9 @@ const Index = () => {
     if (storedApiKey) {
       groqApi.setApiKey(storedApiKey);
     }
+    
+    // Ensure the storage bucket exists
+    ensureConsultationAudiosBucket().catch(console.error);
   }, []);
 
   const handleRecordingComplete = (consultation: ConsultationRecord) => {

@@ -42,6 +42,13 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
     enabled: !!patientId,
   });
 
+  // Force a refetch when component mounts to ensure fresh data
+  useEffect(() => {
+    if (patientId) {
+      refetch();
+    }
+  }, [patientId, refetch]);
+
   // Log the consultations that were fetched
   useEffect(() => {
     console.log("Consultations fetched:", consultations);
