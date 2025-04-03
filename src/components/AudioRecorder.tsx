@@ -8,15 +8,15 @@ import { groqApi } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveConsultation } from "@/lib/storage";
-import { ConsultationRecord } from "@/types";
+import { ConsultationRecord, Patient } from "@/types";
 import PatientSelector from "./PatientSelector";
-import { Patient } from "@/types";
 
 interface AudioRecorderProps {
   onRecordingComplete: (consultation: ConsultationRecord) => void;
+  preselectedPatient?: Patient | null;
 }
 
-const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
+const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [patientName, setPatientName] = useState("");
@@ -29,6 +29,14 @@ const AudioRecorder = ({ onRecordingComplete }: AudioRecorderProps) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const { toast } = useToast();
+
+  // Effect to set the preselected patient when provided
+  useEffect(() => {
+    if (preselectedPatient) {
+      setSelectedPatient(preselectedPatient);
+      setPatientName(preselectedPatient.name);
+    }
+  }, [preselectedPatient]);
 
   useEffect(() => {
     return () => {
