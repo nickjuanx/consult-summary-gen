@@ -5,7 +5,7 @@ import AudioRecorder from "@/components/AudioRecorder";
 import ConsultationsList from "@/components/ConsultationsList";
 import ConsultationDetail from "@/components/ConsultationDetail";
 import PatientsList from "@/components/PatientsList";
-import { ConsultationRecord } from "@/types";
+import { ConsultationRecord, Patient } from "@/types";
 import { groqApi } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ensureConsultationAudiosBucket } from "@/lib/ensureStorageBucket";
@@ -16,6 +16,7 @@ const Index = () => {
   const [newConsultation, setNewConsultation] = useState<ConsultationRecord | null>(null);
   const [showNewConsultation, setShowNewConsultation] = useState(false);
   const [activeTab, setActiveTab] = useState("consultas");
+  const [selectedPatientForConsultation, setSelectedPatientForConsultation] = useState<Patient | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +48,13 @@ const Index = () => {
   const handleBack = () => {
     setSelectedConsultation(null);
     setShowNewConsultation(false);
+    setSelectedPatientForConsultation(null);
+  };
+
+  const handleStartConsultationForPatient = (patient: Patient) => {
+    console.log("Starting consultation for patient:", patient.id, patient.name);
+    setSelectedPatientForConsultation(patient);
+    setActiveTab("consultas");
   };
 
   return (
@@ -77,8 +85,25 @@ const Index = () => {
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
                     <div className="md:col-span-5 space-y-6">
                       <div>
-                        <h2 className="text-xl font-medium text-medical-900 mb-4">Nueva Consulta</h2>
-                        <AudioRecorder onRecordingComplete={handleRecordingComplete} />
+                        <h2 className="text-xl font-medium text-medical-900 mb-4">
+                          {selectedPatientForConsultation 
+                            ? `Nueva Consulta para ${selectedPatientForConsultation.name}` 
+                            : "Nueva Consulta"}
+                        </h2>
+                        <AudioRecorder 
+                          onRecordingComplete={handleRecordingComplete} 
+                          preselectedPatient={selectedPatientForConsultation}
+                        />
+                        {selectedPatientForConsultation && (
+                          <div className="mt-4">
+                            <button 
+                              onClick={() => setSelectedPatientForConsultation(null)}
+                              className="text-sm text-blue-600 hover:text-blue-800"
+                            >
+                              Cambiar paciente
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -90,7 +115,7 @@ const Index = () => {
                 
                 <TabsContent value="pacientes">
                   <div className="mt-6">
-                    <PatientsList />
+                    <PatientsList onStartConsultation={handleStartConsultationForPatient} />
                   </div>
                 </TabsContent>
               </Tabs>

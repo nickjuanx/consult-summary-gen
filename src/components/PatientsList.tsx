@@ -6,7 +6,7 @@ import { getPatients, deletePatient } from "@/lib/patients";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp, Plus, Stethoscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -24,7 +24,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { savePatient } from "@/lib/patients";
 import PatientConsultations from "@/components/PatientConsultations";
 
-const PatientsList = () => {
+interface PatientsListProps {
+  onStartConsultation?: (patient: Patient) => void;
+}
+
+const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
@@ -177,10 +181,12 @@ const PatientsList = () => {
             {patients.length} paciente{patients.length !== 1 ? 's' : ''} registrado{patients.length !== 1 ? 's' : ''}
           </CardDescription>
         </div>
-        <Button onClick={handleNewPatient}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Nuevo Paciente
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={handleNewPatient}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Nuevo Paciente
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -236,6 +242,17 @@ const PatientsList = () => {
                       )}
                     </div>
                     <div className="flex space-x-2">
+                      {onStartConsultation && (
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={() => onStartConsultation(patient)}
+                          className="text-green-700"
+                        >
+                          <Stethoscope className="mr-2 h-4 w-4" />
+                          Nueva Consulta
+                        </Button>
+                      )}
                       <Button 
                         variant="outline" 
                         size="sm"
