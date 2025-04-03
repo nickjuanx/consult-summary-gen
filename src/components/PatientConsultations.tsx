@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
-import { Calendar, FileText, Clock, ChevronDown } from "lucide-react";
+import { Calendar, FileText, Clock, ChevronDown, PencilLine, Save, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,9 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { updateConsultation } from "@/lib/storage";
 
 interface PatientConsultationsProps {
   patientId: string;
@@ -27,6 +30,10 @@ interface PatientConsultationsProps {
 
 const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
+  const [editMode, setEditMode] = useState<string | null>(null);
+  const [editedSummary, setEditedSummary] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   // Add some console logging to help debug
   console.log("PatientConsultations - Patient ID:", patientId);
@@ -53,6 +60,67 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
   useEffect(() => {
     console.log("Consultations fetched:", consultations);
   }, [consultations]);
+
+  const handleEditSummary = (consultation: ConsultationRecord) => {
+    setEditedSummary(consultation.summary || "");
+    setEditMode(consultation.id);
+  };
+
+  const handleSaveSummary = async (consultation: ConsultationRecord) => {
+    if (!editedSummary.trim()) {
+      toast({
+        title: "Error",
+        description: "El resumen no puede estar vacío",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Create updated consultation object
+      const updatedConsultation: ConsultationRecord = {
+        ...consultation,
+        summary: editedSummary
+      };
+
+      // Save to database
+      const error = await updateConsultation(updatedConsultation);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Update local state in the consultations array
+      const updatedConsultations = consultations.map(c => 
+        c.id === consultation.id ? {...c, summary: editedSummary} : c
+      );
+      
+      // Force a refetch to update the UI
+      refetch();
+      
+      setEditMode(null);
+      
+      toast({
+        title: "Resumen actualizado",
+        description: "El resumen ha sido actualizado correctamente",
+      });
+    } catch (error) {
+      console.error("Error al guardar el resumen:", error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo actualizar el resumen",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(null);
+  };
 
   if (isLoading) {
     return <div className="text-center py-4">Cargando historial de consultas...</div>;
@@ -93,63 +161,123 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
                     <div className="flex items-start gap-2">
                       <FileText className="h-4 w-4 mt-1 text-gray-500" />
                       <div className="flex-1">
-                        <h4 className="font-medium mb-1">Resumen:</h4>
-                        <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
-                          {consultation.summary}
-                        </p>
-                      </div>
-                    </div>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                          onClick={() => setSelectedConsultation(consultation)}
-                        >
-                          Ver consulta completa
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>
-                            Consulta del {format(new Date(consultation.dateTime), "PPP", { locale: es })}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 mt-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Clock className="h-4 w-4" />
-                            <span>{format(new Date(consultation.dateTime), "p", { locale: es })}</span>
-                          </div>
-                          
-                          {consultation.audioUrl && (
-                            <div className="mt-4">
-                              <h4 className="font-medium mb-2">Audio de la consulta:</h4>
-                              <audio controls className="w-full">
-                                <source src={consultation.audioUrl} type="audio/webm" />
-                                Su navegador no soporta el elemento de audio.
-                              </audio>
-                            </div>
-                          )}
-                          
-                          <div className="mt-4">
-                            <h4 className="font-medium mb-2">Resumen:</h4>
-                            <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line">
-                              {consultation.summary}
-                            </div>
-                          </div>
-                          
-                          {consultation.transcription && (
-                            <div className="mt-4">
-                              <h4 className="font-medium mb-2">Transcripción completa:</h4>
-                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto">
-                                {consultation.transcription}
-                              </div>
-                            </div>
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-medium mb-1">Resumen:</h4>
+                          {editMode !== consultation.id && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditSummary(consultation)}
+                              className="h-7 px-2"
+                            >
+                              <PencilLine className="h-3.5 w-3.5" />
+                              <span className="ml-1 text-xs">Editar</span>
+                            </Button>
                           )}
                         </div>
-                      </DialogContent>
-                    </Dialog>
+                        
+                        {editMode === consultation.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={editedSummary}
+                              onChange={(e) => setEditedSummary(e.target.value)}
+                              className="min-h-[150px] text-sm"
+                              placeholder="Edite el resumen aquí..."
+                            />
+                            <div className="flex justify-end gap-2 mt-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                disabled={isSaving}
+                                className="h-8"
+                              >
+                                <X className="h-3.5 w-3.5 mr-1" />
+                                Cancelar
+                              </Button>
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => handleSaveSummary(consultation)}
+                                disabled={isSaving}
+                                className="h-8"
+                              >
+                                <Save className="h-3.5 w-3.5 mr-1" />
+                                {isSaving ? "Guardando..." : "Guardar"}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
+                            {consultation.summary}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {editMode !== consultation.id && (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => setSelectedConsultation(consultation)}
+                          >
+                            Ver consulta completa
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>
+                              Consulta del {format(new Date(consultation.dateTime), "PPP", { locale: es })}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 mt-4">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <Clock className="h-4 w-4" />
+                              <span>{format(new Date(consultation.dateTime), "p", { locale: es })}</span>
+                            </div>
+                            
+                            {consultation.audioUrl && (
+                              <div className="mt-4">
+                                <h4 className="font-medium mb-2">Audio de la consulta:</h4>
+                                <audio controls className="w-full">
+                                  <source src={consultation.audioUrl} type="audio/webm" />
+                                  Su navegador no soporta el elemento de audio.
+                                </audio>
+                              </div>
+                            )}
+                            
+                            <div className="mt-4">
+                              <div className="flex justify-between items-center">
+                                <h4 className="font-medium mb-2">Resumen:</h4>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditSummary(consultation)}
+                                >
+                                  <PencilLine className="h-4 w-4 mr-1" />
+                                  Editar
+                                </Button>
+                              </div>
+                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line">
+                                {consultation.summary}
+                              </div>
+                            </div>
+                            
+                            {consultation.transcription && (
+                              <div className="mt-4">
+                                <h4 className="font-medium mb-2">Transcripción completa:</h4>
+                                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto">
+                                  {consultation.transcription}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </>
                 ) : (
                   <p className="text-sm text-gray-500">No hay resumen disponible para esta consulta.</p>
