@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsultationRecord, Patient } from "@/types";
-import { Download, Clipboard, CheckCircle2, User } from "lucide-react";
+import { Download, Clipboard, CheckCircle2, User, PencilLine, Save, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 import { getPatientById } from "@/lib/patients";
+import { Textarea } from "@/components/ui/textarea";
+import { updateConsultation } from "@/lib/storage";
 
 interface ConsultationDetailProps {
   consultation: ConsultationRecord;
@@ -18,6 +20,9 @@ interface ConsultationDetailProps {
 const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) => {
   const [copied, setCopied] = useState<'transcription' | 'summary' | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [editMode, setEditMode] = useState<'summary' | null>(null);
+  const [editedSummary, setEditedSummary] = useState(consultation.summary || "");
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -33,6 +38,12 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     
     loadPatient();
   }, [consultation.patientId]);
+
+  // Reset edited values when consultation changes
+  useEffect(() => {
+    setEditedSummary(consultation.summary || "");
+    setEditMode(null);
+  }, [consultation]);
   
   const copyToClipboard = async (text: string, type: 'transcription' | 'summary') => {
     try {
@@ -64,6 +75,57 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
       a.click();
       document.body.removeChild(a);
     }
+  };
+
+  const handleSaveSummary = async () => {
+    if (!editedSummary.trim()) {
+      toast({
+        title: "Error",
+        description: "El resumen no puede estar vacío",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Create updated consultation object
+      const updatedConsultation: ConsultationRecord = {
+        ...consultation,
+        summary: editedSummary
+      };
+
+      // Save to database
+      const error = await updateConsultation(updatedConsultation);
+      
+      if (error) {
+        throw new Error(error);
+      }
+
+      // Update local state
+      consultation.summary = editedSummary;
+      setEditMode(null);
+      
+      toast({
+        title: "Resumen actualizado",
+        description: "El resumen ha sido actualizado correctamente",
+      });
+    } catch (error) {
+      console.error("Error al guardar el resumen:", error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo actualizar el resumen",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedSummary(consultation.summary || "");
+    setEditMode(null);
   };
   
   // Usamos los datos del paciente de la consulta o los datos completos del paciente
@@ -153,22 +215,65 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
             <CardHeader>
               <CardTitle className="text-lg text-medical-800 flex justify-between items-center">
                 <span>Resumen de la Consulta</span>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => consultation.summary && copyToClipboard(consultation.summary, 'summary')}
-                >
-                  {copied === 'summary' ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <div className="flex gap-2">
+                  {editMode === 'summary' ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={handleSaveSummary}
+                        disabled={isSaving}
+                      >
+                        <Save className="h-4 w-4 mr-1" />
+                        {isSaving ? "Guardando..." : "Guardar"}
+                      </Button>
+                    </>
                   ) : (
-                    <Clipboard className="h-4 w-4" />
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => consultation.summary && copyToClipboard(consultation.summary, 'summary')}
+                      >
+                        {copied === 'summary' ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Clipboard className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setEditMode('summary')}
+                      >
+                        <PencilLine className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
-                </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none">
-                <p className="whitespace-pre-line">{consultation.summary || "No hay resumen disponible"}</p>
+                {editMode === 'summary' ? (
+                  <Textarea
+                    value={editedSummary}
+                    onChange={(e) => setEditedSummary(e.target.value)}
+                    className="min-h-[200px]"
+                    placeholder="Edite el resumen aquí..."
+                  />
+                ) : (
+                  <p className="whitespace-pre-line">{consultation.summary || "No hay resumen disponible"}</p>
+                )}
               </div>
             </CardContent>
           </Card>
