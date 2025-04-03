@@ -8,7 +8,7 @@ export const ensureConsultationAudiosBucket = async (): Promise<void> => {
     
     if (bucketError) {
       console.error("Error listing storage buckets:", bucketError);
-      throw bucketError;
+      return; // No need to throw an error, just log it
     }
     
     const bucketExists = buckets.some(bucket => bucket.name === 'consultation-audios');
@@ -23,7 +23,7 @@ export const ensureConsultationAudiosBucket = async (): Promise<void> => {
       
       if (createError) {
         console.error("Error creating consultation-audios bucket:", createError);
-        throw createError;
+        return; // No need to throw an error, just log it
       } else {
         console.log("Successfully created consultation-audios bucket");
       }
@@ -34,6 +34,6 @@ export const ensureConsultationAudiosBucket = async (): Promise<void> => {
     return Promise.resolve();
   } catch (error) {
     console.error("Error ensuring consultation-audios bucket:", error);
-    throw error;
+    return; // No need to throw an error, just log it
   }
 };

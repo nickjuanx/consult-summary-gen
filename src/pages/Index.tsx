@@ -27,16 +27,21 @@ const Index = () => {
     }
     
     // Ensure the storage bucket exists
-    ensureConsultationAudiosBucket().then(() => {
-      console.log("Storage bucket check completed");
-    }).catch(error => {
-      console.error("Error setting up storage bucket:", error);
-      toast({
-        title: "Error de configuración",
-        description: "No se pudo inicializar el almacenamiento. Algunas funciones pueden no estar disponibles.",
-        variant: "destructive",
+    ensureConsultationAudiosBucket()
+      .then(() => {
+        console.log("Storage bucket check completed successfully");
+      })
+      .catch(error => {
+        console.error("Error setting up storage bucket:", error);
+        // Only show the toast if there's a critical error that prevents functionality
+        if (error && typeof error === 'object' && 'message' in error) {
+          toast({
+            title: "Error de configuración",
+            description: "No se pudo inicializar completamente el almacenamiento.",
+            variant: "destructive",
+          });
+        }
       });
-    });
   }, [toast]);
 
   const handleRecordingComplete = (consultation: ConsultationRecord) => {
