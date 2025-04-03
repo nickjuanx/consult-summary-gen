@@ -33,6 +33,7 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
   const [editMode, setEditMode] = useState<string | null>(null);
   const [editedSummary, setEditedSummary] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
   // Add some console logging to help debug
@@ -64,6 +65,8 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
   const handleEditSummary = (consultation: ConsultationRecord) => {
     setEditedSummary(consultation.summary || "");
     setEditMode(consultation.id);
+    setSelectedConsultation(consultation);
+    setShowEditDialog(true);
   };
 
   const handleSaveSummary = async (consultation: ConsultationRecord) => {
@@ -101,6 +104,7 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
       refetch();
       
       setEditMode(null);
+      setShowEditDialog(false);
       
       toast({
         title: "Resumen actualizado",
@@ -120,6 +124,7 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
 
   const handleCancelEdit = () => {
     setEditMode(null);
+    setShowEditDialog(false);
   };
 
   if (isLoading) {
@@ -176,108 +181,73 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
                           )}
                         </div>
                         
-                        {editMode === consultation.id ? (
-                          <div className="space-y-2">
-                            <Textarea
-                              value={editedSummary}
-                              onChange={(e) => setEditedSummary(e.target.value)}
-                              className="min-h-[150px] text-sm"
-                              placeholder="Edite el resumen aquí..."
-                            />
-                            <div className="flex justify-end gap-2 mt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={handleCancelEdit}
-                                disabled={isSaving}
-                                className="h-8"
-                              >
-                                <X className="h-3.5 w-3.5 mr-1" />
-                                Cancelar
-                              </Button>
-                              <Button 
-                                variant="default" 
-                                size="sm"
-                                onClick={() => handleSaveSummary(consultation)}
-                                disabled={isSaving}
-                                className="h-8"
-                              >
-                                <Save className="h-3.5 w-3.5 mr-1" />
-                                {isSaving ? "Guardando..." : "Guardar"}
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
-                            {consultation.summary}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
+                          {consultation.summary}
+                        </p>
                       </div>
                     </div>
                     
-                    {editMode !== consultation.id && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2"
-                            onClick={() => setSelectedConsultation(consultation)}
-                          >
-                            Ver consulta completa
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>
-                              Consulta del {format(new Date(consultation.dateTime), "PPP", { locale: es })}
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 mt-4">
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <Clock className="h-4 w-4" />
-                              <span>{format(new Date(consultation.dateTime), "p", { locale: es })}</span>
-                            </div>
-                            
-                            {consultation.audioUrl && (
-                              <div className="mt-4">
-                                <h4 className="font-medium mb-2">Audio de la consulta:</h4>
-                                <audio controls className="w-full">
-                                  <source src={consultation.audioUrl} type="audio/webm" />
-                                  Su navegador no soporta el elemento de audio.
-                                </audio>
-                              </div>
-                            )}
-                            
-                            <div className="mt-4">
-                              <div className="flex justify-between items-center">
-                                <h4 className="font-medium mb-2">Resumen:</h4>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleEditSummary(consultation)}
-                                >
-                                  <PencilLine className="h-4 w-4 mr-1" />
-                                  Editar
-                                </Button>
-                              </div>
-                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line">
-                                {consultation.summary}
-                              </div>
-                            </div>
-                            
-                            {consultation.transcription && (
-                              <div className="mt-4">
-                                <h4 className="font-medium mb-2">Transcripción completa:</h4>
-                                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto">
-                                  {consultation.transcription}
-                                </div>
-                              </div>
-                            )}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2"
+                          onClick={() => setSelectedConsultation(consultation)}
+                        >
+                          Ver consulta completa
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>
+                            Consulta del {format(new Date(consultation.dateTime), "PPP", { locale: es })}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Clock className="h-4 w-4" />
+                            <span>{format(new Date(consultation.dateTime), "p", { locale: es })}</span>
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                          
+                          {consultation.audioUrl && (
+                            <div className="mt-4">
+                              <h4 className="font-medium mb-2">Audio de la consulta:</h4>
+                              <audio controls className="w-full">
+                                <source src={consultation.audioUrl} type="audio/webm" />
+                                Su navegador no soporta el elemento de audio.
+                              </audio>
+                            </div>
+                          )}
+                          
+                          <div className="mt-4">
+                            <div className="flex justify-between items-center">
+                              <h4 className="font-medium mb-2">Resumen:</h4>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditSummary(consultation)}
+                              >
+                                <PencilLine className="h-4 w-4 mr-1" />
+                                Editar
+                              </Button>
+                            </div>
+                            <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line">
+                              {consultation.summary}
+                            </div>
+                          </div>
+                          
+                          {consultation.transcription && (
+                            <div className="mt-4">
+                              <h4 className="font-medium mb-2">Transcripción completa:</h4>
+                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto">
+                                {consultation.transcription}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </>
                 ) : (
                   <p className="text-sm text-gray-500">No hay resumen disponible para esta consulta.</p>
@@ -287,6 +257,69 @@ const PatientConsultations = ({ patientId }: PatientConsultationsProps) => {
           </AccordionItem>
         ))}
       </Accordion>
+
+      {/* Large edit dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent fullWidth className="overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Editar Resumen - {selectedConsultation && format(new Date(selectedConsultation.dateTime), "PPP", { locale: es })}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 my-4">
+            {selectedConsultation?.audioUrl && (
+              <div>
+                <h4 className="font-medium mb-2">Audio de la consulta:</h4>
+                <audio controls className="w-full">
+                  <source src={selectedConsultation.audioUrl} type="audio/webm" />
+                  Su navegador no soporta el elemento de audio.
+                </audio>
+              </div>
+            )}
+            
+            <div>
+              <h4 className="font-medium mb-2">Resumen:</h4>
+              <Textarea
+                value={editedSummary}
+                onChange={(e) => setEditedSummary(e.target.value)}
+                className="min-h-[300px] text-sm font-mono"
+                placeholder="Edite el resumen aquí..."
+              />
+            </div>
+            
+            {selectedConsultation?.transcription && (
+              <div>
+                <h4 className="font-medium mb-2">Transcripción completa:</h4>
+                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[400px] overflow-y-auto border">
+                  {selectedConsultation.transcription}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end gap-2 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="h-10"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button 
+              variant="default" 
+              onClick={() => selectedConsultation && handleSaveSummary(selectedConsultation)}
+              disabled={isSaving}
+              className="h-10"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? "Guardando..." : "Guardar cambios"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
