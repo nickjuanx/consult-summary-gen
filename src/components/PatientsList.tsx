@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Patient } from "@/types";
@@ -156,7 +157,7 @@ const PatientsList = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-medical-500 to-medical-600">
         <div>
           <CardTitle className="text-white text-2xl font-bold tracking-tight">Pacientes</CardTitle>
-          <CardDescription className="text-white/80">
+          <CardDescription className="text-white/90">
             {patients.length} paciente{patients.length !== 1 ? 's' : ''} registrado{patients.length !== 1 ? 's' : ''}
           </CardDescription>
         </div>
@@ -164,62 +165,62 @@ const PatientsList = ({
           <Button 
             onClick={handleNewPatient} 
             variant="secondary" 
-            className="bg-white/20 text-white hover:bg-white/30 transition-colors"
+            className="bg-white/30 text-white hover:bg-white/40 transition-colors"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Nuevo Paciente
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="bg-white/5 backdrop-blur-sm">
+      <CardContent className="bg-white/10 backdrop-blur-sm">
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-medical-500" />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-medical-400" />
             <Input 
               placeholder="Buscar paciente por nombre o DNI..." 
               value={searchTerm} 
               onChange={e => setSearchTerm(e.target.value)} 
-              className="pl-8 border-medical-200 focus:ring-medical-500 transition-all"
+              className="pl-8 border-medical-300 focus:ring-medical-500 transition-all text-medical-900 placeholder-medical-600"
             />
           </div>
 
           <div className="space-y-4">
             {filteredPatients.length === 0 ? (
-              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+              <div className="text-center py-4 text-medical-700 bg-medical-50 rounded-lg">
                 No se encontraron pacientes con el criterio de búsqueda.
               </div>
             ) : (
               filteredPatients.map(patient => (
                 <div 
                   key={patient.id} 
-                  className="border border-medical-100 rounded-lg p-4 transition-all hover:shadow-sm bg-white"
+                  className="border border-medical-200 rounded-lg p-4 transition-all hover:shadow-sm bg-white"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src="" alt={patient.name} />
-                        <AvatarFallback className="bg-medical-100 text-medical-600">
+                        <AvatarFallback className="bg-medical-100 text-medical-700">
                           <User className="h-6 w-6" />
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="font-semibold text-medical-900">{patient.name}</h3>
-                        {patient.dni && <p className="text-sm text-gray-500">DNI: {patient.dni}</p>}
-                        <div className="mt-2 flex flex-wrap gap-2 text-sm text-gray-600">
+                        {patient.dni && <p className="text-sm text-medical-700">DNI: {patient.dni}</p>}
+                        <div className="mt-2 flex flex-wrap gap-2 text-sm text-medical-800">
                           {patient.phone && (
-                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
-                              <Phone className="h-3.5 w-3.5 mr-1 text-medical-600" />
+                            <div className="flex items-center bg-medical-100 px-2 py-1 rounded-full">
+                              <Phone className="h-3.5 w-3.5 mr-1 text-medical-700" />
                               {patient.phone}
                             </div>
                           )}
                           {patient.email && (
-                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
-                              <Mail className="h-3.5 w-3.5 mr-1 text-medical-600" />
+                            <div className="flex items-center bg-medical-100 px-2 py-1 rounded-full">
+                              <Mail className="h-3.5 w-3.5 mr-1 text-medical-700" />
                               {patient.email}
                             </div>
                           )}
                           {patient.age && (
-                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
+                            <div className="flex items-center bg-medical-100 px-2 py-1 rounded-full">
                               Edad: {patient.age}
                             </div>
                           )}
@@ -232,7 +233,7 @@ const PatientsList = ({
                           variant="outline" 
                           size="sm" 
                           onClick={() => onStartConsultation(patient)} 
-                          className="text-medical-600 border-medical-200 hover:bg-medical-50"
+                          className="text-medical-700 border-medical-300 hover:bg-medical-50"
                         >
                           <Stethoscope className="mr-2 h-4 w-4" />
                           Nueva Consulta
@@ -242,7 +243,7 @@ const PatientsList = ({
                         variant="outline" 
                         size="sm" 
                         onClick={() => handleEditPatient(patient)}
-                        className="text-medical-600 border-medical-200 hover:bg-medical-50"
+                        className="text-medical-700 border-medical-300 hover:bg-medical-50"
                       >
                         Editar
                       </Button>
@@ -250,9 +251,9 @@ const PatientsList = ({
                         variant="destructive" 
                         size="sm" 
                         onClick={() => setPatientToDelete(patient.id)}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        className="text-red-700 border-red-300 bg-red-50 hover:bg-red-100"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-700" />
                       </Button>
                     </div>
                   </div>
@@ -262,7 +263,7 @@ const PatientsList = ({
                       variant="ghost" 
                       size="sm" 
                       onClick={() => togglePatientExpand(patient.id)} 
-                      className="text-sm flex items-center -ml-2 text-medical-600 hover:bg-medical-50"
+                      className="text-sm flex items-center -ml-2 text-medical-700 hover:bg-medical-50"
                     >
                       {expandedPatient === patient.id ? (
                         <>
