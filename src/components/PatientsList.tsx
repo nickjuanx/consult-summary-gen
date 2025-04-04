@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Patient } from "@/types";
@@ -8,107 +7,86 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp, Plus, Stethoscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { savePatient } from "@/lib/patients";
 import PatientConsultations from "@/components/PatientConsultations";
-
 interface PatientsListProps {
   onStartConsultation?: (patient: Patient) => void;
 }
-
-const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
+const PatientsList = ({
+  onStartConsultation
+}: PatientsListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const { 
-    data: patients = [], 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    toast
+  } = useToast();
+  const {
+    data: patients = [],
+    isLoading,
+    error,
+    refetch
   } = useQuery({
     queryKey: ['patients'],
-    queryFn: getPatients,
+    queryFn: getPatients
   });
-
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredPatients(patients);
     } else {
-      const filtered = patients.filter(
-        patient => 
-          patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (patient.dni && patient.dni.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      const filtered = patients.filter(patient => patient.name.toLowerCase().includes(searchTerm.toLowerCase()) || patient.dni && patient.dni.toLowerCase().includes(searchTerm.toLowerCase()));
       setFilteredPatients(filtered);
     }
   }, [searchTerm, patients]);
-
   const handleDeletePatient = async () => {
     if (patientToDelete) {
       const error = await deletePatient(patientToDelete);
-      
       if (error) {
         toast({
           title: "Error",
           description: error,
-          variant: "destructive",
+          variant: "destructive"
         });
       } else {
         toast({
           title: "Paciente Eliminado",
-          description: "El paciente ha sido eliminado correctamente",
+          description: "El paciente ha sido eliminado correctamente"
         });
         refetch();
       }
-      
       setPatientToDelete(null);
     }
   };
-
   const handleSavePatient = async () => {
     if (!editingPatient || !editingPatient.name.trim()) {
       toast({
         title: "Nombre Requerido",
         description: "Por favor ingrese el nombre del paciente",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     try {
       const result = await savePatient(editingPatient);
-      
       if (result.error) {
         toast({
           title: "Error",
           description: result.error,
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-      
       toast({
         title: "Paciente Guardado",
-        description: "Los datos del paciente han sido guardados correctamente",
+        description: "Los datos del paciente han sido guardados correctamente"
       });
-      
       setShowNewPatientDialog(false);
       setEditingPatient(null);
       refetch();
@@ -117,16 +95,14 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
       toast({
         title: "Error",
         description: "No se pudo guardar el paciente",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
     setShowNewPatientDialog(true);
   };
-
   const handleNewPatient = () => {
     setEditingPatient({
       id: "",
@@ -139,7 +115,6 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
     });
     setShowNewPatientDialog(true);
   };
-
   const togglePatientExpand = (patientId: string) => {
     if (expandedPatient === patientId) {
       setExpandedPatient(null);
@@ -147,33 +122,25 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
       setExpandedPatient(patientId);
     }
   };
-
   if (isLoading) {
-    return (
-      <Card>
+    return <Card>
         <CardHeader>
           <CardTitle>Pacientes</CardTitle>
           <CardDescription>Cargando pacientes...</CardDescription>
         </CardHeader>
-      </Card>
-    );
+      </Card>;
   }
-
   if (error) {
-    return (
-      <Card>
+    return <Card>
         <CardHeader>
           <CardTitle>Pacientes</CardTitle>
           <CardDescription className="text-red-500">
             Error al cargar los pacientes. Por favor, intenta de nuevo.
           </CardDescription>
         </CardHeader>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
           <CardTitle>Pacientes</CardTitle>
@@ -188,118 +155,69 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-cyan-900">
         <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar paciente por nombre o DNI..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8" />
           </div>
 
           <div className="space-y-2">
-            {filteredPatients.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+            {filteredPatients.length === 0 ? <div className="text-center py-4 text-gray-500">
                 No se encontraron pacientes con el criterio de búsqueda.
-              </div>
-            ) : (
-              filteredPatients.map((patient) => (
-                <div
-                  key={patient.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                >
+              </div> : filteredPatients.map(patient => <div key={patient.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium text-gray-900">{patient.name}</h3>
                       {patient.dni && <p className="text-sm text-gray-600">DNI: {patient.dni}</p>}
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                        {patient.phone && (
-                          <div className="flex items-center">
+                        {patient.phone && <div className="flex items-center">
                             <Phone className="h-3.5 w-3.5 mr-1" />
                             {patient.phone}
-                          </div>
-                        )}
-                        {patient.email && (
-                          <div className="flex items-center">
+                          </div>}
+                        {patient.email && <div className="flex items-center">
                             <Mail className="h-3.5 w-3.5 mr-1" />
                             {patient.email}
-                          </div>
-                        )}
-                        {patient.age && (
-                          <div className="flex items-center">
+                          </div>}
+                        {patient.age && <div className="flex items-center">
                             Edad: {patient.age}
-                          </div>
-                        )}
+                          </div>}
                       </div>
-                      {patient.notes && (
-                        <div className="mt-2 flex items-start">
+                      {patient.notes && <div className="mt-2 flex items-start">
                           <FileText className="h-3.5 w-3.5 mr-1 mt-0.5" />
                           <span className="text-sm text-gray-600 line-clamp-2">{patient.notes}</span>
-                        </div>
-                      )}
+                        </div>}
                     </div>
                     <div className="flex space-x-2">
-                      {onStartConsultation && (
-                        <Button 
-                          variant="secondary" 
-                          size="sm"
-                          onClick={() => onStartConsultation(patient)}
-                          className="text-green-700"
-                        >
+                      {onStartConsultation && <Button variant="secondary" size="sm" onClick={() => onStartConsultation(patient)} className="text-green-700">
                           <Stethoscope className="mr-2 h-4 w-4" />
                           Nueva Consulta
-                        </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditPatient(patient)}
-                      >
+                        </Button>}
+                      <Button variant="outline" size="sm" onClick={() => handleEditPatient(patient)}>
                         Editar
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setPatientToDelete(patient.id)}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setPatientToDelete(patient.id)} className="text-red-600 border-red-200 hover:bg-red-50">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   
                   <div className="mt-3 flex justify-between items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => togglePatientExpand(patient.id)}
-                      className="text-sm text-gray-600 flex items-center -ml-2"
-                    >
-                      {expandedPatient === patient.id ? (
-                        <>
+                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm text-gray-600 flex items-center -ml-2">
+                      {expandedPatient === patient.id ? <>
                           <ChevronUp className="h-4 w-4 mr-1" />
                           Ocultar historial
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <ChevronDown className="h-4 w-4 mr-1" />
                           Ver historial de consultas
-                        </>
-                      )}
+                        </>}
                     </Button>
                   </div>
                   
-                  {expandedPatient === patient.id && (
-                    <div className="mt-4 pt-4 border-t">
+                  {expandedPatient === patient.id && <div className="mt-4 pt-4 border-t">
                       <PatientConsultations patientId={patient.id} />
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
+                    </div>}
+                </div>)}
           </div>
         </div>
       </CardContent>
@@ -313,62 +231,47 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Nombre Completo *</Label>
-              <Input
-                id="name"
-                value={editingPatient?.name || ""}
-                onChange={(e) => setEditingPatient(prev => prev ? {...prev, name: e.target.value} : null)}
-                placeholder="Nombre y apellidos"
-                required
-              />
+              <Input id="name" value={editingPatient?.name || ""} onChange={e => setEditingPatient(prev => prev ? {
+              ...prev,
+              name: e.target.value
+            } : null)} placeholder="Nombre y apellidos" required />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="dni">DNI/Documento</Label>
-              <Input
-                id="dni"
-                value={editingPatient?.dni || ""}
-                onChange={(e) => setEditingPatient(prev => prev ? {...prev, dni: e.target.value} : null)}
-                placeholder="Número de documento"
-              />
+              <Input id="dni" value={editingPatient?.dni || ""} onChange={e => setEditingPatient(prev => prev ? {
+              ...prev,
+              dni: e.target.value
+            } : null)} placeholder="Número de documento" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone">Teléfono</Label>
-                <Input
-                  id="phone"
-                  value={editingPatient?.phone || ""}
-                  onChange={(e) => setEditingPatient(prev => prev ? {...prev, phone: e.target.value} : null)}
-                  placeholder="Número de teléfono"
-                />
+                <Input id="phone" value={editingPatient?.phone || ""} onChange={e => setEditingPatient(prev => prev ? {
+                ...prev,
+                phone: e.target.value
+              } : null)} placeholder="Número de teléfono" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="age">Edad</Label>
-                <Input
-                  id="age"
-                  value={editingPatient?.age || ""}
-                  onChange={(e) => setEditingPatient(prev => prev ? {...prev, age: e.target.value} : null)}
-                  placeholder="Edad"
-                />
+                <Input id="age" value={editingPatient?.age || ""} onChange={e => setEditingPatient(prev => prev ? {
+                ...prev,
+                age: e.target.value
+              } : null)} placeholder="Edad" />
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={editingPatient?.email || ""}
-                onChange={(e) => setEditingPatient(prev => prev ? {...prev, email: e.target.value} : null)}
-                placeholder="Correo electrónico"
-              />
+              <Input id="email" type="email" value={editingPatient?.email || ""} onChange={e => setEditingPatient(prev => prev ? {
+              ...prev,
+              email: e.target.value
+            } : null)} placeholder="Correo electrónico" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="notes">Notas</Label>
-              <Textarea
-                id="notes"
-                value={editingPatient?.notes || ""}
-                onChange={(e) => setEditingPatient(prev => prev ? {...prev, notes: e.target.value} : null)}
-                placeholder="Notas adicionales sobre el paciente"
-                rows={3}
-              />
+              <Textarea id="notes" value={editingPatient?.notes || ""} onChange={e => setEditingPatient(prev => prev ? {
+              ...prev,
+              notes: e.target.value
+            } : null)} placeholder="Notas adicionales sobre el paciente" rows={3} />
             </div>
             <Button type="button" onClick={handleSavePatient}>
               Guardar Paciente
@@ -378,7 +281,7 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
       </Dialog>
 
       {/* Alert dialog para confirmar eliminación */}
-      <AlertDialog open={!!patientToDelete} onOpenChange={(open) => !open && setPatientToDelete(null)}>
+      <AlertDialog open={!!patientToDelete} onOpenChange={open => !open && setPatientToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
@@ -394,8 +297,6 @@ const PatientsList = ({ onStartConsultation }: PatientsListProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
-  );
+    </Card>;
 };
-
 export default PatientsList;
