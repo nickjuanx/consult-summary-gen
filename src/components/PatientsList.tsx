@@ -203,7 +203,7 @@ const PatientsList = ({
                   </div>
                   
                   <div className="mt-3 flex justify-between items-center">
-                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50 bg-cyan-900 hover:bg-cyan-800">
+                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50 bg-transparent">
                       {expandedPatient === patient.id ? <>
                           <ChevronUp className="h-4 w-4 mr-1" />
                           Ocultar historial
