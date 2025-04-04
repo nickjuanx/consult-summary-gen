@@ -124,7 +124,7 @@ const PatientConsultations = ({
         {consultations.map(consultation => <AccordionItem key={consultation.id} value={consultation.id}>
             <AccordionTrigger className="px-4 py-3 rounded-md bg-cyan-900 hover:bg-cyan-800">
               <div className="flex items-center gap-3 text-left">
-                <Calendar className="h-4 w-4 text-gray-500 bg-slate-200 rounded" />
+                <Calendar className="h-4 w-4 text-gray-500 rounded bg-gray-50" />
                 <div>
                   <span className="font-medium text-slate-50">
                     {format(new Date(consultation.dateTime), "PPP", {
@@ -143,17 +143,17 @@ const PatientConsultations = ({
               <div className="space-y-3">
                 {consultation.summary ? <>
                     <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 mt-1 text-gray-500" />
+                      <FileText className="h-4 w-4 mt-1 text-gray-500 bg-slate-50" />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-medium mb-1">Resumen:</h4>
-                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2">
+                          <h4 className="font-medium mb-1 text-slate-50">Resumen:</h4>
+                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-gray-50">
                               <PencilLine className="h-3.5 w-3.5" />
-                              <span className="ml-1 text-xs">Editar</span>
+                              <span className="ml-1 text-xs text-slate-50">Editar</span>
                             </Button>}
                         </div>
                         
-                        <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
+                        <p className="text-sm whitespace-pre-line line-clamp-3 text-slate-50">
                           {consultation.summary}
                         </p>
                       </div>
