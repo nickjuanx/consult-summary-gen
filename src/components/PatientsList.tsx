@@ -159,7 +159,7 @@ const PatientsList = ({
         <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 bg-cyan-900" />
+            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 bg-slate-50" />
           </div>
 
           <div className="space-y-2">
