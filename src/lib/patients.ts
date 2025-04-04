@@ -150,6 +150,31 @@ export const searchPatients = async (query: string): Promise<Patient[]> => {
 // Eliminar un paciente
 export const deletePatient = async (id: string): Promise<string | null> => {
   try {
+    // First, check if there are consultations associated with this patient
+    const { data: consultations, error: consultationsError } = await supabase
+      .from('consultations')
+      .select('id')
+      .eq('patient_id', id);
+    
+    if (consultationsError) {
+      console.error("Error al verificar consultas del paciente:", consultationsError);
+      return "Error al eliminar el paciente: no se pudieron verificar consultas asociadas";
+    }
+    
+    // Delete any associated consultations first to maintain referential integrity
+    if (consultations && consultations.length > 0) {
+      const { error: deleteConsultationsError } = await supabase
+        .from('consultations')
+        .delete()
+        .eq('patient_id', id);
+      
+      if (deleteConsultationsError) {
+        console.error("Error al eliminar consultas asociadas:", deleteConsultationsError);
+        return "Error al eliminar consultas asociadas al paciente";
+      }
+    }
+    
+    // Now delete the patient
     const { error } = await supabase
       .from('patients')
       .delete()
@@ -157,7 +182,7 @@ export const deletePatient = async (id: string): Promise<string | null> => {
     
     if (error) {
       console.error("Error al eliminar el paciente:", error);
-      return "Error al eliminar el paciente";
+      return `Error al eliminar el paciente: ${error.message}`;
     }
     
     return null; // Sin errores
