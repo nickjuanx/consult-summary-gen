@@ -141,15 +141,15 @@ const PatientsList = ({
       </Card>;
   }
   return <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-cyan-900">
         <div>
-          <CardTitle>Pacientes</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-50">Pacientes</CardTitle>
+          <CardDescription className="text-slate-50">
             {patients.length} paciente{patients.length !== 1 ? 's' : ''} registrado{patients.length !== 1 ? 's' : ''}
           </CardDescription>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={handleNewPatient}>
+          <Button onClick={handleNewPatient} className="bg-slate-950 hover:bg-slate-800">
             <UserPlus className="mr-2 h-4 w-4" />
             Nuevo Paciente
           </Button>
@@ -159,7 +159,7 @@ const PatientsList = ({
         <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8" />
+            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 bg-cyan-900" />
           </div>
 
           <div className="space-y-2">
@@ -168,10 +168,10 @@ const PatientsList = ({
               </div> : filteredPatients.map(patient => <div key={patient.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-medium text-gray-900">{patient.name}</h3>
-                      {patient.dni && <p className="text-sm text-gray-600">DNI: {patient.dni}</p>}
+                      <h3 className="font-medium text-slate-50">{patient.name}</h3>
+                      {patient.dni && <p className="text-sm text-slate-50">DNI: {patient.dni}</p>}
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                        {patient.phone && <div className="flex items-center">
+                        {patient.phone && <div className="flex items-center bg-slate-50">
                             <Phone className="h-3.5 w-3.5 mr-1" />
                             {patient.phone}
                           </div>}
@@ -203,7 +203,7 @@ const PatientsList = ({
                   </div>
                   
                   <div className="mt-3 flex justify-between items-center">
-                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm text-gray-600 flex items-center -ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50">
                       {expandedPatient === patient.id ? <>
                           <ChevronUp className="h-4 w-4 mr-1" />
                           Ocultar historial
