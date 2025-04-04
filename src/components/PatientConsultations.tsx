@@ -146,14 +146,14 @@ const PatientConsultations = ({
                       <FileText className="h-4 w-4 mt-1 text-gray-500 bg-slate-50" />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <h4 className="font-medium mb-1 text-slate-50">Resumen:</h4>
+                          <h4 className="font-medium mb-1 text-cyan-900">Resumen:</h4>
                           {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-cyan-50 bg-cyan-800 hover:bg-cyan-700">
                               <PencilLine className="h-3.5 w-3.5" />
                               <span className="ml-1 text-xs text-slate-50">Editar</span>
                             </Button>}
                         </div>
                         
-                        <p className="text-sm whitespace-pre-line line-clamp-3 text-slate-50">
+                        <p className="text-sm whitespace-pre-line line-clamp-3 text-cyan-900">
                           {consultation.summary}
                         </p>
                       </div>
