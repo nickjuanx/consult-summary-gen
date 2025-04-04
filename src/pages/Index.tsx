@@ -9,6 +9,7 @@ import { groqApi } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ensureConsultationAudiosBucket } from "@/lib/ensureStorageBucket";
 import { useToast } from "@/components/ui/use-toast";
+
 const Index = () => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
   const [newConsultation, setNewConsultation] = useState<ConsultationRecord | null>(null);
@@ -18,19 +19,17 @@ const Index = () => {
   const {
     toast
   } = useToast();
+
   useEffect(() => {
-    // Try to load API key from localStorage on component mount
     const storedApiKey = localStorage.getItem("groqApiKey");
     if (storedApiKey) {
       groqApi.setApiKey(storedApiKey);
     }
 
-    // Ensure the storage bucket exists
     ensureConsultationAudiosBucket().then(() => {
       console.log("Storage bucket check completed successfully");
     }).catch(error => {
       console.error("Error setting up storage bucket:", error);
-      // Only show the toast if there's a critical error that prevents functionality
       if (error && typeof error === 'object' && 'message' in error) {
         toast({
           title: "Error de configuración",
@@ -40,31 +39,74 @@ const Index = () => {
       }
     });
   }, [toast]);
+
   const handleRecordingComplete = (consultation: ConsultationRecord) => {
     console.log("Recording complete, displaying consultation:", consultation.id);
     setNewConsultation(consultation);
     setShowNewConsultation(true);
   };
+
   const handleBack = () => {
     setSelectedConsultation(null);
     setShowNewConsultation(false);
     setSelectedPatientForConsultation(null);
   };
+
   const handleStartConsultationForPatient = (patient: Patient) => {
     console.log("Starting consultation for patient:", patient.id, patient.name);
     setSelectedPatientForConsultation(patient);
     setActiveTab("consultas");
   };
-  return <div className="flex min-h-screen flex-col">
+
+  return (
+    <div className="flex min-h-screen flex-col">
       <Header />
       
       <main className="flex-1">
         <div className="container py-6 md:py-8 bg-transparent">
-          {selectedConsultation ? <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} /> : showNewConsultation && newConsultation ? <ConsultationDetail consultation={newConsultation} onBack={handleBack} /> : <div className="space-y-6">
+          {selectedConsultation ? (
+            <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} />
+          ) : showNewConsultation && newConsultation ? (
+            <ConsultationDetail consultation={newConsultation} onBack={handleBack} />
+          ) : (
+            <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 when the button is clicked, make it white and when not, blue. bg-cyan-950 rounded-3xl">
-                  <TabsTrigger value="consultas" className="text-slate-950 bg-slate-50 rounded-3xl font-normal when the button is clicked, make it white and when not, blue.">Consultas</TabsTrigger>
-                  <TabsTrigger value="pacientes" className="text-slate-950 bg-slate-50 rounded-3xl font-normal">Pacientes</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 bg-medical-100 rounded-full p-1">
+                  <TabsTrigger 
+                    value="consultas" 
+                    className="
+                      data-[state=active]:bg-medical-600 data-[state=active]:text-white 
+                      text-medical-700 
+                      rounded-full 
+                      transition-all 
+                      duration-300 
+                      ease-in-out 
+                      hover:bg-medical-500/20
+                      py-2 
+                      font-medium
+                      data-[state=active]:shadow-md
+                    "
+                  >
+                    Consultas
+                  </TabsTrigger>
+                  
+                  <TabsTrigger 
+                    value="pacientes" 
+                    className="
+                      data-[state=active]:bg-medical-600 data-[state=active]:text-white 
+                      text-medical-700 
+                      rounded-full 
+                      transition-all 
+                      duration-300 
+                      ease-in-out 
+                      hover:bg-medical-500/20
+                      py-2 
+                      font-medium
+                      data-[state=active]:shadow-md
+                    "
+                  >
+                    Pacientes
+                  </TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="consultas">
@@ -95,7 +137,8 @@ const Index = () => {
                   </div>
                 </TabsContent>
               </Tabs>
-            </div>}
+            </div>
+          )}
         </div>
       </main>
       
@@ -106,6 +149,8 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
