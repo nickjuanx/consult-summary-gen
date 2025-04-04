@@ -59,11 +59,11 @@ const Index = () => {
       <Header />
       
       <main className="flex-1">
-        <div className="container py-6 md:py-8">
+        <div className="container py-6 md:py-8 bg-transparent">
           {selectedConsultation ? <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} /> : showNewConsultation && newConsultation ? <ConsultationDetail consultation={newConsultation} onBack={handleBack} /> : <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="consultas" className="bg-gray-950 hover:bg-gray-800 text-slate-50">Consultas</TabsTrigger>
+                  <TabsTrigger value="consultas" className="text-base bg-transparent text-slate-950">Consultas</TabsTrigger>
                   <TabsTrigger value="pacientes" className="bg-cyan-900 hover:bg-cyan-800 text-slate-50">Pacientes</TabsTrigger>
                 </TabsList>
                 
