@@ -119,7 +119,7 @@ const PatientConsultations = ({
     return <div className="text-center py-4 text-gray-500">No hay consultas registradas para este paciente.</div>;
   }
   return <div className="space-y-4">
-      <h3 className="text-lg font-medium text-slate-50">Historial de Consultas</h3>
+      <h3 className="text-lg font-medium text-cyan-900">Historial de Consultas</h3>
       <Accordion type="single" collapsible className="w-full">
         {consultations.map(consultation => <AccordionItem key={consultation.id} value={consultation.id}>
             <AccordionTrigger className="px-4 py-3 rounded-md bg-cyan-900 hover:bg-cyan-800">
