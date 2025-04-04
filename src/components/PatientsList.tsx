@@ -171,7 +171,7 @@ const PatientsList = ({
                       <h3 className="font-medium text-slate-50">{patient.name}</h3>
                       {patient.dni && <p className="text-sm text-slate-50">DNI: {patient.dni}</p>}
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                        {patient.phone && <div className="flex items-center bg-slate-50">
+                        {patient.phone && <div className="flex items-center bg-slate-50 rounded-lg">
                             <Phone className="h-3.5 w-3.5 mr-1" />
                             {patient.phone}
                           </div>}
@@ -203,7 +203,7 @@ const PatientsList = ({
                   </div>
                   
                   <div className="mt-3 flex justify-between items-center">
-                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50">
+                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50 bg-cyan-900 hover:bg-cyan-800">
                       {expandedPatient === patient.id ? <>
                           <ChevronUp className="h-4 w-4 mr-1" />
                           Ocultar historial
