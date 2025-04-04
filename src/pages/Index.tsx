@@ -63,7 +63,7 @@ const Index = () => {
           {selectedConsultation ? <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} /> : showNewConsultation && newConsultation ? <ConsultationDetail consultation={newConsultation} onBack={handleBack} /> : <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-zinc-900 when the button is clicked, make it white and when not, blue.">
-                  <TabsTrigger value="consultas" className="text-slate-950 bg-slate-50 rounded-3xl font-normal">Consultas</TabsTrigger>
+                  <TabsTrigger value="consultas" className="text-slate-950 bg-slate-50 rounded-3xl font-normal when the button is clicked, make it white and when not, blue.">Consultas</TabsTrigger>
                   <TabsTrigger value="pacientes" className="text-slate-950 bg-slate-50 rounded-3xl font-normal">Pacientes</TabsTrigger>
                 </TabsList>
                 
