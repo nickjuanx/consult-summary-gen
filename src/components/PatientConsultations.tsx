@@ -147,7 +147,7 @@ const PatientConsultations = ({
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <h4 className="font-medium mb-1 text-slate-50">Resumen:</h4>
-                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-gray-50 bg-transparent">
+                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-cyan-50 bg-cyan-800 hover:bg-cyan-700">
                               <PencilLine className="h-3.5 w-3.5" />
                               <span className="ml-1 text-xs text-slate-50">Editar</span>
                             </Button>}

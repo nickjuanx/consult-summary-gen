@@ -171,7 +171,7 @@ const PatientsList = ({
                       <h3 className="font-medium text-slate-50">{patient.name}</h3>
                       {patient.dni && <p className="text-sm text-slate-50">DNI: {patient.dni}</p>}
                       <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                        {patient.phone && <div className="flex items-center bg-slate-50 rounded-lg">
+                        {patient.phone && <div className="flex items-center rounded-lg bg-cyan-800">
                             <Phone className="h-3.5 w-3.5 mr-1" />
                             {patient.phone}
                           </div>}
