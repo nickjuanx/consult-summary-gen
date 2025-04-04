@@ -3,10 +3,10 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Patient } from "@/types";
 import { getPatients, deletePatient } from "@/lib/patients";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp, Plus, Stethoscope, User } from "lucide-react";
+import { UserPlus, Search, Trash2, Phone, Mail, ChevronDown, ChevronUp, Stethoscope, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -174,7 +174,7 @@ const PatientsList = ({
       </CardHeader>
       <CardContent className="bg-white/10 backdrop-blur-sm">
         <div className="space-y-4">
-          <div className="relative">
+          <div className="relative mb-6"> {/* Added mb-6 to create more space */}
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-medical-400" />
             <Input 
               placeholder="Buscar paciente por nombre o DNI..." 
