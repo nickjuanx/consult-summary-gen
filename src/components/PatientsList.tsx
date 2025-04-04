@@ -165,7 +165,7 @@ const PatientsList = ({
           <div className="space-y-2">
             {filteredPatients.length === 0 ? <div className="text-center py-4 text-gray-500">
                 No se encontraron pacientes con el criterio de búsqueda.
-              </div> : filteredPatients.map(patient => <div key={patient.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              </div> : filteredPatients.map(patient => <div key={patient.id} className="border rounded-lg p-4 transition-colors bg-cyan-900">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium text-slate-50">{patient.name}</h3>
