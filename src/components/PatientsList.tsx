@@ -5,7 +5,7 @@ import { getPatients, deletePatient } from "@/lib/patients";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp, Plus, Stethoscope } from "lucide-react";
+import { UserPlus, Search, Trash2, Phone, Mail, FileText, ChevronDown, ChevronUp, Plus, Stethoscope, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,9 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { savePatient } from "@/lib/patients";
 import PatientConsultations from "@/components/PatientConsultations";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 interface PatientsListProps {
   onStartConsultation?: (patient: Patient) => void;
 }
+
 const PatientsList = ({
   onStartConsultation
 }: PatientsListProps) => {
@@ -37,6 +40,7 @@ const PatientsList = ({
     queryKey: ['patients'],
     queryFn: getPatients
   });
+
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredPatients(patients);
@@ -45,6 +49,7 @@ const PatientsList = ({
       setFilteredPatients(filtered);
     }
   }, [searchTerm, patients]);
+
   const handleDeletePatient = async () => {
     if (patientToDelete) {
       const error = await deletePatient(patientToDelete);
@@ -64,6 +69,7 @@ const PatientsList = ({
       setPatientToDelete(null);
     }
   };
+
   const handleSavePatient = async () => {
     if (!editingPatient || !editingPatient.name.trim()) {
       toast({
@@ -99,10 +105,12 @@ const PatientsList = ({
       });
     }
   };
+
   const handleEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
     setShowNewPatientDialog(true);
   };
+
   const handleNewPatient = () => {
     setEditingPatient({
       id: "",
@@ -115,6 +123,7 @@ const PatientsList = ({
     });
     setShowNewPatientDialog(true);
   };
+
   const togglePatientExpand = (patientId: string) => {
     if (expandedPatient === patientId) {
       setExpandedPatient(null);
@@ -122,6 +131,7 @@ const PatientsList = ({
       setExpandedPatient(patientId);
     }
   };
+
   if (isLoading) {
     return <Card>
         <CardHeader>
@@ -130,6 +140,7 @@ const PatientsList = ({
         </CardHeader>
       </Card>;
   }
+
   if (error) {
     return <Card>
         <CardHeader>
@@ -140,89 +151,145 @@ const PatientsList = ({
         </CardHeader>
       </Card>;
   }
-  return <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-cyan-900">
+
+  return <Card className="shadow-lg border-none rounded-xl overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-medical-500 to-medical-600">
         <div>
-          <CardTitle className="text-slate-50">Pacientes</CardTitle>
-          <CardDescription className="text-slate-50">
+          <CardTitle className="text-white text-2xl font-bold tracking-tight">Pacientes</CardTitle>
+          <CardDescription className="text-white/80">
             {patients.length} paciente{patients.length !== 1 ? 's' : ''} registrado{patients.length !== 1 ? 's' : ''}
           </CardDescription>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={handleNewPatient} className="bg-slate-950 hover:bg-slate-800">
+          <Button 
+            onClick={handleNewPatient} 
+            variant="secondary" 
+            className="bg-white/20 text-white hover:bg-white/30 transition-colors"
+          >
             <UserPlus className="mr-2 h-4 w-4" />
             Nuevo Paciente
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="bg-cyan-900">
+      <CardContent className="bg-white/5 backdrop-blur-sm">
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input placeholder="Buscar paciente por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8 bg-slate-50" />
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-medical-500" />
+            <Input 
+              placeholder="Buscar paciente por nombre o DNI..." 
+              value={searchTerm} 
+              onChange={e => setSearchTerm(e.target.value)} 
+              className="pl-8 border-medical-200 focus:ring-medical-500 transition-all"
+            />
           </div>
 
-          <div className="space-y-2">
-            {filteredPatients.length === 0 ? <div className="text-center py-4 text-gray-500">
+          <div className="space-y-4">
+            {filteredPatients.length === 0 ? (
+              <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                 No se encontraron pacientes con el criterio de búsqueda.
-              </div> : filteredPatients.map(patient => <div key={patient.id} className="border rounded-lg p-4 transition-colors bg-cyan-900">
+              </div>
+            ) : (
+              filteredPatients.map(patient => (
+                <div 
+                  key={patient.id} 
+                  className="border border-medical-100 rounded-lg p-4 transition-all hover:shadow-sm bg-white"
+                >
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium text-slate-50">{patient.name}</h3>
-                      {patient.dni && <p className="text-sm text-slate-50">DNI: {patient.dni}</p>}
-                      <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
-                        {patient.phone && <div className="flex items-center rounded-lg bg-cyan-800">
-                            <Phone className="h-3.5 w-3.5 mr-1" />
-                            {patient.phone}
-                          </div>}
-                        {patient.email && <div className="flex items-center">
-                            <Mail className="h-3.5 w-3.5 mr-1" />
-                            {patient.email}
-                          </div>}
-                        {patient.age && <div className="flex items-center">
-                            Edad: {patient.age}
-                          </div>}
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src="" alt={patient.name} />
+                        <AvatarFallback className="bg-medical-100 text-medical-600">
+                          <User className="h-6 w-6" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-semibold text-medical-900">{patient.name}</h3>
+                        {patient.dni && <p className="text-sm text-gray-500">DNI: {patient.dni}</p>}
+                        <div className="mt-2 flex flex-wrap gap-2 text-sm text-gray-600">
+                          {patient.phone && (
+                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
+                              <Phone className="h-3.5 w-3.5 mr-1 text-medical-600" />
+                              {patient.phone}
+                            </div>
+                          )}
+                          {patient.email && (
+                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
+                              <Mail className="h-3.5 w-3.5 mr-1 text-medical-600" />
+                              {patient.email}
+                            </div>
+                          )}
+                          {patient.age && (
+                            <div className="flex items-center bg-medical-50 px-2 py-1 rounded-full">
+                              Edad: {patient.age}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {patient.notes && <div className="mt-2 flex items-start">
-                          <FileText className="h-3.5 w-3.5 mr-1 mt-0.5" />
-                          <span className="text-sm text-gray-600 line-clamp-2">{patient.notes}</span>
-                        </div>}
                     </div>
                     <div className="flex space-x-2">
-                      {onStartConsultation && <Button variant="secondary" size="sm" onClick={() => onStartConsultation(patient)} className="text-green-700">
+                      {onStartConsultation && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => onStartConsultation(patient)} 
+                          className="text-medical-600 border-medical-200 hover:bg-medical-50"
+                        >
                           <Stethoscope className="mr-2 h-4 w-4" />
                           Nueva Consulta
-                        </Button>}
-                      <Button variant="outline" size="sm" onClick={() => handleEditPatient(patient)}>
+                        </Button>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditPatient(patient)}
+                        className="text-medical-600 border-medical-200 hover:bg-medical-50"
+                      >
                         Editar
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setPatientToDelete(patient.id)} className="text-red-600 border-red-200 hover:bg-red-50">
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => setPatientToDelete(patient.id)}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   
                   <div className="mt-3 flex justify-between items-center">
-                    <Button variant="ghost" size="sm" onClick={() => togglePatientExpand(patient.id)} className="text-sm flex items-center -ml-2 text-slate-50 bg-transparent">
-                      {expandedPatient === patient.id ? <>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => togglePatientExpand(patient.id)} 
+                      className="text-sm flex items-center -ml-2 text-medical-600 hover:bg-medical-50"
+                    >
+                      {expandedPatient === patient.id ? (
+                        <>
                           <ChevronUp className="h-4 w-4 mr-1" />
                           Ocultar historial
-                        </> : <>
+                        </>
+                      ) : (
+                        <>
                           <ChevronDown className="h-4 w-4 mr-1" />
                           Ver historial de consultas
-                        </>}
+                        </>
+                      )}
                     </Button>
                   </div>
                   
-                  {expandedPatient === patient.id && <div className="mt-4 pt-4 border-t">
+                  {expandedPatient === patient.id && (
+                    <div className="mt-4 pt-4 border-t border-medical-100">
                       <PatientConsultations patientId={patient.id} />
-                    </div>}
-                </div>)}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </CardContent>
 
-      {/* Dialog para crear/editar paciente */}
       <Dialog open={showNewPatientDialog} onOpenChange={setShowNewPatientDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -280,7 +347,6 @@ const PatientsList = ({
         </DialogContent>
       </Dialog>
 
-      {/* Alert dialog para confirmar eliminación */}
       <AlertDialog open={!!patientToDelete} onOpenChange={open => !open && setPatientToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -299,4 +365,5 @@ const PatientsList = ({
       </AlertDialog>
     </Card>;
 };
+
 export default PatientsList;
