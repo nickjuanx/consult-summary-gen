@@ -62,9 +62,9 @@ const Index = () => {
         <div className="container py-6 md:py-8 bg-transparent">
           {selectedConsultation ? <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} /> : showNewConsultation && newConsultation ? <ConsultationDetail consultation={newConsultation} onBack={handleBack} /> : <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="consultas" className="text-base bg-slate-50 text-slate-950">Consultas</TabsTrigger>
-                  <TabsTrigger value="pacientes" className="bg-slate-50 text-slate-950">Pacientes</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 bg-zinc-900">
+                  <TabsTrigger value="consultas" className="text-slate-950 bg-slate-50 rounded-3xl font-normal">Consultas</TabsTrigger>
+                  <TabsTrigger value="pacientes" className="text-slate-950 bg-slate-50 rounded-3xl font-normal">Pacientes</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="consultas">
