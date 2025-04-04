@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import AudioRecorder from "@/components/AudioRecorder";
@@ -10,80 +9,62 @@ import { groqApi } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ensureConsultationAudiosBucket } from "@/lib/ensureStorageBucket";
 import { useToast } from "@/components/ui/use-toast";
-
 const Index = () => {
   const [selectedConsultation, setSelectedConsultation] = useState<ConsultationRecord | null>(null);
   const [newConsultation, setNewConsultation] = useState<ConsultationRecord | null>(null);
   const [showNewConsultation, setShowNewConsultation] = useState(false);
   const [activeTab, setActiveTab] = useState("consultas");
   const [selectedPatientForConsultation, setSelectedPatientForConsultation] = useState<Patient | null>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     // Try to load API key from localStorage on component mount
     const storedApiKey = localStorage.getItem("groqApiKey");
     if (storedApiKey) {
       groqApi.setApiKey(storedApiKey);
     }
-    
-    // Ensure the storage bucket exists
-    ensureConsultationAudiosBucket()
-      .then(() => {
-        console.log("Storage bucket check completed successfully");
-      })
-      .catch(error => {
-        console.error("Error setting up storage bucket:", error);
-        // Only show the toast if there's a critical error that prevents functionality
-        if (error && typeof error === 'object' && 'message' in error) {
-          toast({
-            title: "Error de configuración",
-            description: "No se pudo inicializar completamente el almacenamiento.",
-            variant: "destructive",
-          });
-        }
-      });
-  }, [toast]);
 
+    // Ensure the storage bucket exists
+    ensureConsultationAudiosBucket().then(() => {
+      console.log("Storage bucket check completed successfully");
+    }).catch(error => {
+      console.error("Error setting up storage bucket:", error);
+      // Only show the toast if there's a critical error that prevents functionality
+      if (error && typeof error === 'object' && 'message' in error) {
+        toast({
+          title: "Error de configuración",
+          description: "No se pudo inicializar completamente el almacenamiento.",
+          variant: "destructive"
+        });
+      }
+    });
+  }, [toast]);
   const handleRecordingComplete = (consultation: ConsultationRecord) => {
     console.log("Recording complete, displaying consultation:", consultation.id);
     setNewConsultation(consultation);
     setShowNewConsultation(true);
   };
-
   const handleBack = () => {
     setSelectedConsultation(null);
     setShowNewConsultation(false);
     setSelectedPatientForConsultation(null);
   };
-
   const handleStartConsultationForPatient = (patient: Patient) => {
     console.log("Starting consultation for patient:", patient.id, patient.name);
     setSelectedPatientForConsultation(patient);
     setActiveTab("consultas");
   };
-
-  return (
-    <div className="flex min-h-screen flex-col">
+  return <div className="flex min-h-screen flex-col">
       <Header />
       
       <main className="flex-1">
         <div className="container py-6 md:py-8">
-          {selectedConsultation ? (
-            <ConsultationDetail 
-              consultation={selectedConsultation}
-              onBack={handleBack}
-            />
-          ) : showNewConsultation && newConsultation ? (
-            <ConsultationDetail 
-              consultation={newConsultation}
-              onBack={handleBack}
-            />
-          ) : (
-            <div className="space-y-6">
+          {selectedConsultation ? <ConsultationDetail consultation={selectedConsultation} onBack={handleBack} /> : showNewConsultation && newConsultation ? <ConsultationDetail consultation={newConsultation} onBack={handleBack} /> : <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="consultas">Consultas</TabsTrigger>
-                  <TabsTrigger value="pacientes">Pacientes</TabsTrigger>
+                  <TabsTrigger value="pacientes" className="bg-cyan-900 hover:bg-cyan-800 text-slate-50">Pacientes</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="consultas">
@@ -91,24 +72,14 @@ const Index = () => {
                     <div className="md:col-span-5 space-y-6">
                       <div>
                         <h2 className="text-xl font-medium text-medical-900 mb-4">
-                          {selectedPatientForConsultation 
-                            ? `Nueva Consulta para ${selectedPatientForConsultation.name}` 
-                            : "Nueva Consulta"}
+                          {selectedPatientForConsultation ? `Nueva Consulta para ${selectedPatientForConsultation.name}` : "Nueva Consulta"}
                         </h2>
-                        <AudioRecorder 
-                          onRecordingComplete={handleRecordingComplete} 
-                          preselectedPatient={selectedPatientForConsultation}
-                        />
-                        {selectedPatientForConsultation && (
-                          <div className="mt-4">
-                            <button 
-                              onClick={() => setSelectedPatientForConsultation(null)}
-                              className="text-sm text-blue-600 hover:text-blue-800"
-                            >
+                        <AudioRecorder onRecordingComplete={handleRecordingComplete} preselectedPatient={selectedPatientForConsultation} />
+                        {selectedPatientForConsultation && <div className="mt-4">
+                            <button onClick={() => setSelectedPatientForConsultation(null)} className="text-sm text-blue-600 hover:text-blue-800">
                               Cambiar paciente
                             </button>
-                          </div>
-                        )}
+                          </div>}
                       </div>
                     </div>
                     
@@ -124,8 +95,7 @@ const Index = () => {
                   </div>
                 </TabsContent>
               </Tabs>
-            </div>
-          )}
+            </div>}
         </div>
       </main>
       
@@ -136,8 +106,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
