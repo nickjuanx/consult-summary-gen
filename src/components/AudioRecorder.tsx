@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +29,8 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
   const timerRef = useRef<number | null>(null);
   const { toast } = useToast();
 
-  // Effect to set the preselected patient when provided
+  const MAX_RECORDING_TIME = 30 * 60; // 30 minutes in seconds
+
   useEffect(() => {
     if (preselectedPatient) {
       setSelectedPatient(preselectedPatient);
@@ -103,7 +103,18 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
       setRecordingTime(0);
       
       timerRef.current = window.setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        setRecordingTime(prev => {
+          if (prev + 1 >= MAX_RECORDING_TIME) {
+            stopRecording(); // Automatically stop recording at max time
+            toast({
+              title: "Límite de Tiempo Alcanzado",
+              description: "Se ha alcanzado el límite máximo de grabación de 30 minutos.",
+              variant: "default"
+            });
+            return prev;
+          }
+          return prev + 1;
+        });
       }, 1000);
       
       toast({
@@ -141,7 +152,6 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
     setIsProcessing(true);
     
     try {
-      // Ensure the audio blob is valid
       if (!audioBlob || audioBlob.size === 0) {
         throw new Error("El archivo de audio está vacío");
       }
