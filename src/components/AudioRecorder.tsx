@@ -66,7 +66,8 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
   }, [selectedPatient]);
 
   const setupMediaRecorderErrorHandling = (mediaRecorder: MediaRecorder) => {
-    mediaRecorder.onerror = (event) => {
+    mediaRecorder.onerror = (event: MediaRecorderErrorEvent) => {
+      // Use the specific error from the event
       const error = event.error || new Error("Error desconocido en la grabación");
       console.error("MediaRecorder error:", error);
       setRecordingError(`Error en la grabación: ${error.message}`);
