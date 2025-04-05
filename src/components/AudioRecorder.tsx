@@ -1,7 +1,8 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Mic, Square, Loader2 } from "lucide-react";
+import { Mic, Square, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { groqApi } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { saveConsultation } from "@/lib/storage";
 import { ConsultationRecord, Patient } from "@/types";
 import PatientSelector from "./PatientSelector";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface AudioRecorderProps {
   onRecordingComplete: (consultation: ConsultationRecord) => void;
@@ -23,10 +25,12 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showPatientSelector, setShowPatientSelector] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
   const MAX_RECORDING_TIME = 30 * 60; // 30 minutes in seconds
@@ -47,6 +51,11 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
       }
+
+      // Clean up media stream when component unmounts
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
   }, [audioUrl]);
 
@@ -56,7 +65,40 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
     }
   }, [selectedPatient]);
 
+  const setupMediaRecorderErrorHandling = (mediaRecorder: MediaRecorder) => {
+    mediaRecorder.onerror = (event) => {
+      const error = event.error || new Error("Error desconocido en la grabación");
+      console.error("MediaRecorder error:", error);
+      setRecordingError(`Error en la grabación: ${error.message}`);
+      
+      toast({
+        title: "Error de Grabación",
+        description: `Se ha producido un error durante la grabación: ${error.message}`,
+        variant: "destructive",
+      });
+      
+      // Clean up recording state
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      
+      setIsRecording(false);
+      
+      // Try to stop the recorder if it's active
+      try {
+        if (mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      } catch (stopError) {
+        console.error("Error stopping media recorder:", stopError);
+      }
+    };
+  };
+
   const startRecording = async () => {
+    setRecordingError(null);
+    
     if (!patientName.trim()) {
       toast({
         title: "Nombre del paciente requerido",
@@ -77,28 +119,67 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      
+      setupMediaRecorderErrorHandling(mediaRecorder);
       
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          // Monitor data collection
+          console.log(`Chunk collected: ${event.data.size} bytes. Total chunks: ${audioChunksRef.current.length}`);
         }
       };
       
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
+        if (recordingError) {
+          console.log("Recording stopped due to an error");
+          return; // Don't process if there was an error
+        }
         
-        stream.getTracks().forEach(track => track.stop());
+        if (audioChunksRef.current.length === 0) {
+          setRecordingError("No se registraron datos de audio. Verifique que su micrófono está funcionando correctamente.");
+          toast({
+            title: "Error de Grabación",
+            description: "No se registraron datos de audio. Verifique que su micrófono está funcionando correctamente.",
+            variant: "destructive",
+          });
+          return;
+        }
         
-        await processRecording(audioBlob);
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          console.log(`Audio blob created: ${audioBlob.size} bytes`);
+          
+          if (audioBlob.size === 0) {
+            throw new Error("El archivo de audio está vacío");
+          }
+          
+          const url = URL.createObjectURL(audioBlob);
+          setAudioUrl(url);
+          
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
+          
+          await processRecording(audioBlob);
+        } catch (error) {
+          console.error("Error processing recording:", error);
+          setRecordingError(`Error al procesar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+          toast({
+            title: "Error de Procesamiento",
+            description: `Error al procesar la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+            variant: "destructive",
+          });
+        }
       };
       
-      mediaRecorder.start();
+      // Start with small data intervals to detect problems early
+      mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setRecordingTime(0);
       
@@ -115,6 +196,22 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
           }
           return prev + 1;
         });
+        
+        // Check that recorder is still active
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'recording') {
+          console.warn("MediaRecorder is no longer recording");
+          setRecordingError("La grabación se detuvo inesperadamente. Por favor intente nuevamente.");
+          
+          toast({
+            title: "Error de Grabación",
+            description: "La grabación se detuvo inesperadamente. Por favor intente nuevamente.",
+            variant: "destructive",
+          });
+          
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setIsRecording(false);
+        }
       }, 1000);
       
       toast({
@@ -123,9 +220,10 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
       });
     } catch (error) {
       console.error("Error al acceder al micrófono:", error);
+      setRecordingError(`Error al acceder al micrófono: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       toast({
         title: "Error de Micrófono",
-        description: "No se pudo acceder al micrófono. Por favor verifique los permisos.",
+        description: `No se pudo acceder al micrófono. ${error instanceof Error ? error.message : 'Por favor verifique los permisos.'}`,
         variant: "destructive",
       });
     }
@@ -133,18 +231,28 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      try {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+        
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        
+        toast({
+          title: "Grabación Detenida",
+          description: "Procesando su consulta...",
+        });
+      } catch (error) {
+        console.error("Error al detener la grabación:", error);
+        setRecordingError(`Error al detener la grabación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        toast({
+          title: "Error al Detener",
+          description: `No se pudo detener la grabación correctamente: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          variant: "destructive",
+        });
       }
-      
-      toast({
-        title: "Grabación Detenida",
-        description: "Procesando su consulta...",
-      });
     }
   };
 
@@ -226,8 +334,10 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
       setPatientName("");
       setAudioUrl(null);
       setSelectedPatient(null);
+      setRecordingError(null);
     } catch (error) {
       console.error("Error de procesamiento:", error);
+      setRecordingError(`Error de procesamiento: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       toast({
         title: "Error de Procesamiento",
         description: error instanceof Error ? error.message : "No se pudo procesar la grabación",
@@ -282,6 +392,14 @@ const AudioRecorder = ({ onRecordingComplete, preselectedPatient }: AudioRecorde
                 initialPatientName={patientName}
               />
             </div>
+          )}
+          
+          {recordingError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error en la grabación</AlertTitle>
+              <AlertDescription>{recordingError}</AlertDescription>
+            </Alert>
           )}
           
           {(isRecording || isProcessing) && (
