@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,11 +10,75 @@ import { useToast } from "@/components/ui/use-toast";
 import { getPatientById } from "@/lib/patients";
 import { Textarea } from "@/components/ui/textarea";
 import { updateConsultation } from "@/lib/storage";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 interface ConsultationDetailProps {
   consultation: ConsultationRecord;
   onBack: () => void;
 }
+
+const renderMarkdownTable = (markdownTable: string) => {
+  if (!markdownTable.includes('|')) return markdownTable;
+  
+  try {
+    const rows = markdownTable.trim().split('\n');
+    if (rows.length < 2) return markdownTable;
+    
+    const headerRow = rows[0].trim();
+    const headers = headerRow
+      .split('|')
+      .map(cell => cell.trim())
+      .filter(cell => cell !== '');
+      
+    const isSeparator = rows[1].trim().replace(/[^|\-\s]/g, '') === rows[1].trim();
+    const dataStartIndex = isSeparator ? 2 : 1;
+    
+    const dataRows = rows.slice(dataStartIndex).map(row => {
+      return row
+        .trim()
+        .split('|')
+        .map(cell => cell.trim())
+        .filter(cell => cell !== '');
+    }).filter(row => row.length > 0);
+    
+    return (
+      <Table className="mt-2 mb-4">
+        <TableHeader>
+          <TableRow>
+            {headers.map((header, i) => (
+              <TableHead key={`header-${i}`}>{header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {dataRows.map((row, rowIndex) => (
+            <TableRow key={`row-${rowIndex}`}>
+              {row.map((cell, cellIndex) => (
+                <TableCell key={`cell-${rowIndex}-${cellIndex}`}>{cell}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  } catch (error) {
+    console.error("Error parsing markdown table:", error);
+    return markdownTable;
+  }
+};
+
+const processTextWithTables = (text: string) => {
+  if (!text) return null;
+  
+  const sections = text.split(/\n\n+/);
+  
+  return sections.map((section, index) => {
+    if (section.includes('|') && section.split('\n').filter(line => line.includes('|')).length >= 2) {
+      return <div key={`section-${index}`}>{renderMarkdownTable(section)}</div>;
+    }
+    return <p key={`section-${index}`} className="whitespace-pre-line">{section}</p>;
+  });
+};
 
 const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) => {
   const [copied, setCopied] = useState<'transcription' | 'summary' | null>(null);
@@ -26,7 +89,6 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
   const { toast } = useToast();
   
   useEffect(() => {
-    // Cargar datos completos del paciente si hay un ID
     const loadPatient = async () => {
       if (consultation.patientId) {
         const patientData = await getPatientById(consultation.patientId);
@@ -39,7 +101,6 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     loadPatient();
   }, [consultation.patientId]);
 
-  // Reset edited values when consultation changes
   useEffect(() => {
     setEditedSummary(consultation.summary || "");
     setEditMode(null);
@@ -90,20 +151,17 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     setIsSaving(true);
 
     try {
-      // Create updated consultation object
       const updatedConsultation: ConsultationRecord = {
         ...consultation,
         summary: editedSummary
       };
 
-      // Save to database
       const error = await updateConsultation(updatedConsultation);
       
       if (error) {
         throw new Error(error);
       }
 
-      // Update local state
       consultation.summary = editedSummary;
       setEditMode(null);
       
@@ -128,7 +186,6 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
     setEditMode(null);
   };
   
-  // Usamos los datos del paciente de la consulta o los datos completos del paciente
   const patientData = patient || {
     id: consultation.patientId || '',
     name: consultation.patientName,
@@ -272,7 +329,7 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
                     placeholder="Edite el resumen aquí..."
                   />
                 ) : (
-                  <p className="whitespace-pre-line">{consultation.summary || "No hay resumen disponible"}</p>
+                  processTextWithTables(consultation.summary || "No hay resumen disponible")
                 )}
               </div>
             </CardContent>
