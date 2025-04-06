@@ -26,6 +26,7 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
   const [symptomsData, setSymptomsData] = useState<any[]>([]);
+  const [diagnosisData, setDiagnosisData] = useState<any[]>([]);
   
   // Get patients list
   const { 
@@ -78,19 +79,48 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
       
       setChartData(monthlyData);
       
-      // Extract symptoms data from summaries for pie chart
+      // Extract clinical data for pie charts
       const symptomsMap: Record<string, number> = {};
+      const diagnosisMap: Record<string, number> = {};
+      
+      // Key clinical terms to look for
       const keySymptoms = [
-        "fiebre", "dolor", "tos", "náuseas", "vómitos", "diarrea", 
-        "fatiga", "mareos", "dolor de cabeza", "dolor abdominal"
+        "dolor", "fiebre", "cefalea", "tos", "disnea", "náuseas", "vómitos", 
+        "diarrea", "astenia", "fatiga", "mareo", "vértigo", "disuria", 
+        "poliuria", "odinofagia", "disfonía", "prurito", "edema", "diaforesis"
+      ];
+      
+      const keyDiagnosis = [
+        "hipertensión", "diabetes", "neumonía", "bronquitis", "gastritis", 
+        "migraña", "infección", "artrosis", "artritis", "hipotiroidismo", 
+        "hipertiroidismo", "anemia", "colitis", "faringitis", "dermatitis",
+        "hipercolesterolemia", "depresión", "ansiedad", "insuficiencia"
       ];
       
       consultations.forEach(consultation => {
         if (consultation.summary) {
           const lowerSummary = consultation.summary.toLowerCase();
+          
+          // Extract motivo de consulta and diagnóstico presuntivo sections
+          const motivoSection = lowerSummary.includes("motivo de consulta") ? 
+            lowerSummary.split("motivo de consulta:")[1]?.split(/diagnóstico|antecedentes|exámenes/i)[0] || "" : "";
+            
+          const diagnosticoSection = lowerSummary.includes("diagnóstico presuntivo") ? 
+            lowerSummary.split("diagnóstico presuntivo:")[1]?.split(/indicaciones|exámenes solicitados/i)[0] || "" : "";
+          
+          // Check for symptoms in motivo de consulta
           keySymptoms.forEach(symptom => {
-            if (lowerSummary.includes(symptom)) {
+            // Prioriza búsqueda en sección de motivo de consulta
+            if ((motivoSection && motivoSection.includes(symptom)) || lowerSummary.includes(symptom)) {
               symptomsMap[symptom] = (symptomsMap[symptom] || 0) + 1;
+            }
+          });
+          
+          // Check for diagnosis in diagnóstico presuntivo
+          keyDiagnosis.forEach(diagnosis => {
+            // Prioriza búsqueda en sección de diagnóstico
+            if ((diagnosticoSection && diagnosticoSection.includes(diagnosis)) || lowerSummary.includes(diagnosis)) {
+              diagnosisMap[diagnosis] = (diagnosisMap[diagnosis] || 0) + 1;
             }
           });
         }
@@ -106,9 +136,21 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
         .slice(0, 5); // Get top 5 symptoms
       
       setSymptomsData(symptomsChartData);
+      
+      // Transform diagnosis to chart data
+      const diagnosisChartData = Object.keys(diagnosisMap)
+        .map(diagnosis => ({
+          name: diagnosis.charAt(0).toUpperCase() + diagnosis.slice(1),
+          value: diagnosisMap[diagnosis]
+        }))
+        .sort((a, b) => b.value - a.value) // Sort by frequency
+        .slice(0, 5); // Get top 5 diagnoses
+      
+      setDiagnosisData(diagnosisChartData);
     } else {
       setChartData([]);
       setSymptomsData([]);
+      setDiagnosisData([]);
     }
   }, [consultations]);
 
@@ -199,7 +241,7 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
 
               {symptomsData.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Síntomas Frecuentes</h3>
+                  <h3 className="text-lg font-medium mb-4">Motivos de Consulta Frecuentes</h3>
                   <div className="h-80">
                     <ChartContainer
                       config={{
@@ -222,6 +264,41 @@ const ConsultationsList = ({ onConsultationSelect }: ConsultationsListProps) => 
                           >
                             {symptomsData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </div>
+                </div>
+              )}
+
+              {diagnosisData.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Diagnósticos Presuntivos Frecuentes</h3>
+                  <div className="h-80">
+                    <ChartContainer
+                      config={{
+                        value: {
+                          label: "Frecuencia"
+                        }
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={diagnosisData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {diagnosisData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
                             ))}
                           </Pie>
                           <ChartTooltip content={<ChartTooltipContent />} />
