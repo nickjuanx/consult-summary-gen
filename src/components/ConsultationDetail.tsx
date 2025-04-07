@@ -42,7 +42,7 @@ const renderMarkdownTable = (markdownTable: string) => {
     }).filter(row => row.length > 0);
     
     return (
-      <Table className="mt-2 mb-4 border border-gray-200">
+      <Table wrapperClassName="w-full overflow-x-auto border border-gray-200 rounded-md">
         <TableHeader className="bg-medical-50">
           <TableRow>
             {headers.map((header, i) => (
@@ -114,7 +114,7 @@ const processTextWithTables = (text: string) => {
         return {á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ñ: 'n'}[char] || char;
       })) {
         case "datos personales":
-          icon = <User className="h-4 w-4" />;
+          icon = <Users className="h-4 w-4" />;
           break;
         case "motivo de consulta":
           icon = <AlertCircle className="h-4 w-4" />;
@@ -139,6 +139,9 @@ const processTextWithTables = (text: string) => {
           break;
         case "examenes solicitados":
           icon = <FilePlus2 className="h-4 w-4" />;
+          break;
+        case "laboratorio":
+          icon = <TestTube className="h-4 w-4" />;
           break;
         default:
           icon = <FileText className="h-4 w-4" />;
@@ -200,11 +203,17 @@ const processTextParts = (text: string) => {
               <TestTube className="h-4 w-4 text-amber-500" />
               <h4 className="font-medium text-amber-700">Laboratorio:</h4>
             </div>
-            {renderMarkdownTable(segment.replace(/laboratorio:?\s*/i, ''))}
+            <div className="w-full overflow-x-auto rounded-md">
+              {renderMarkdownTable(segment.replace(/laboratorio:?\s*/i, ''))}
+            </div>
           </div>
         );
       }
-      return <div key={`table-${index}`}>{renderMarkdownTable(segment)}</div>;
+      return (
+        <div key={`table-${index}`} className="w-full overflow-x-auto rounded-md">
+          {renderMarkdownTable(segment)}
+        </div>
+      );
     }
     
     if (segment.split('\n').some(line => line.trim().match(/^[•\-\*]\s/))) {

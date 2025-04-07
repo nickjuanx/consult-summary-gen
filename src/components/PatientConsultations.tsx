@@ -104,7 +104,6 @@ const processTextWithTables = (text: string) => {
           icon = <FileText className="h-4 w-4" />;
       }
       
-      // Check if content contains table format
       if (sectionContent.includes('|') && sectionContent.split('\n').filter(line => line.includes('|')).length >= 2) {
         result.push(
           <div key={`section-${i}`} className="mb-4">
@@ -114,7 +113,7 @@ const processTextWithTables = (text: string) => {
               </div>
               <h3 className="font-semibold text-medical-800">{sectionTitle}</h3>
             </div>
-            <div className="pl-2">{renderMarkdownTable(sectionContent)}</div>
+            <div className="pl-2 overflow-x-auto">{renderMarkdownTable(sectionContent)}</div>
           </div>
         );
       } else {
@@ -303,9 +302,13 @@ const PatientConsultations = ({
                           Ver consulta completa
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto p-6" aria-describedby="consultation-details">
+                      <DialogContent 
+                        className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto p-6"
+                        fullWidth
+                        aria-describedby="consultation-details"
+                      >
                         <DialogHeader>
-                          <DialogTitle className="text-lg text-cyan-900 flex items-center gap-2">
+                          <DialogTitle className="text-xl text-cyan-900 flex items-center gap-2">
                             <Calendar className="h-5 w-5 text-cyan-700" />
                             Consulta del {format(new Date(consultation.dateTime), "PPP", {
                         locale: es
@@ -368,7 +371,11 @@ const PatientConsultations = ({
       </Accordion>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent fullWidth className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto p-6" aria-describedby="consultation-edit">
+        <DialogContent 
+          fullWidth 
+          className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto p-6" 
+          aria-describedby="consultation-edit"
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-cyan-900">
               <PencilLine className="h-5 w-5 text-cyan-700" />
