@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Patient } from "@/types";
@@ -174,7 +173,7 @@ const PatientsList = ({
       </CardHeader>
       <CardContent className="bg-white/10 backdrop-blur-sm">
         <div className="space-y-4">
-          <div className="relative mb-6"> {/* Added mb-6 to create more space */}
+          <div className="relative mb-6">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-medical-400" />
             <Input 
               placeholder="Buscar paciente por nombre o DNI..." 

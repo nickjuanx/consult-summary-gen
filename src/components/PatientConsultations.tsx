@@ -5,16 +5,136 @@ import { getConsultationsByPatient } from "@/lib/storage";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, FileText, Clock, PencilLine, Save, X, HeartPulse } from "lucide-react";
+import { Calendar, FileText, Clock, PencilLine, Save, X, HeartPulse, Users, TestTube } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { updateConsultation } from "@/lib/storage";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 
 interface PatientConsultationsProps {
   patientId: string;
 }
+
+const renderMarkdownTable = (markdownTable: string) => {
+  if (!markdownTable.includes('|')) return markdownTable;
+  
+  try {
+    const rows = markdownTable.trim().split('\n');
+    if (rows.length < 2) return markdownTable;
+    
+    const headerRow = rows[0].trim();
+    const headers = headerRow
+      .split('|')
+      .map(cell => cell.trim())
+      .filter(cell => cell !== '');
+      
+    const isSeparator = rows[1].trim().replace(/[^|\-\s]/g, '') === rows[1].trim();
+    const dataStartIndex = isSeparator ? 2 : 1;
+    
+    const dataRows = rows.slice(dataStartIndex).map(row => {
+      return row
+        .trim()
+        .split('|')
+        .map(cell => cell.trim())
+        .filter(cell => cell !== '');
+    }).filter(row => row.length > 0);
+    
+    return (
+      <Table className="mt-2 mb-4 border border-gray-200">
+        <TableHeader className="bg-medical-50">
+          <TableRow>
+            {headers.map((header, i) => (
+              <TableHead key={`header-${i}`} className="font-medium text-medical-800">{header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {dataRows.map((row, rowIndex) => (
+            <TableRow key={`row-${rowIndex}`} className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+              {row.map((cell, cellIndex) => (
+                <TableCell key={`cell-${rowIndex}-${cellIndex}`}>{cell}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  } catch (error) {
+    console.error("Error parsing markdown table:", error);
+    return markdownTable;
+  }
+};
+
+const processTextWithTables = (text: string) => {
+  if (!text) return null;
+  
+  const sectionPattern = /\n([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+):\s*\n/g;
+  const sections = text.split(sectionPattern);
+  
+  if (sections.length <= 1) {
+    return <div className="whitespace-pre-line">{text}</div>;
+  }
+  
+  let result: React.ReactNode[] = [];
+  if (sections[0].trim()) {
+    result.push(<div key="intro" className="mb-3">{sections[0]}</div>);
+  }
+  
+  for (let i = 1; i < sections.length; i += 2) {
+    if (i + 1 < sections.length) {
+      const sectionTitle = sections[i].trim();
+      const sectionContent = sections[i + 1].trim();
+      
+      let icon;
+      switch (sectionTitle.toLowerCase().replace(/[áéíóúñ]/g, char => {
+        return {á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ñ: 'n'}[char] || char;
+      })) {
+        case "datos personales":
+          icon = <Users className="h-4 w-4" />;
+          break;
+        case "motivo de consulta":
+          icon = <FileText className="h-4 w-4" />;
+          break;
+        case "laboratorio":
+          icon = <TestTube className="h-4 w-4" />;
+          break;
+        default:
+          icon = <FileText className="h-4 w-4" />;
+      }
+      
+      // Check if content contains table format
+      if (sectionContent.includes('|') && sectionContent.split('\n').filter(line => line.includes('|')).length >= 2) {
+        result.push(
+          <div key={`section-${i}`} className="mb-4">
+            <div className="mb-2 flex items-center gap-2 bg-medical-100/50 p-2 rounded-md">
+              <div className="p-1.5 rounded-full bg-medical-200/70">
+                {icon}
+              </div>
+              <h3 className="font-semibold text-medical-800">{sectionTitle}</h3>
+            </div>
+            <div className="pl-2">{renderMarkdownTable(sectionContent)}</div>
+          </div>
+        );
+      } else {
+        result.push(
+          <div key={`section-${i}`} className="mb-4">
+            <div className="mb-2 flex items-center gap-2 bg-medical-100/50 p-2 rounded-md">
+              <div className="p-1.5 rounded-full bg-medical-200/70">
+                {icon}
+              </div>
+              <h3 className="font-semibold text-medical-800">{sectionTitle}</h3>
+            </div>
+            <div className="pl-2 whitespace-pre-line">{sectionContent}</div>
+          </div>
+        );
+      }
+    }
+  }
+  
+  return <div className="space-y-2">{result}</div>;
+};
 
 const PatientConsultations = ({
   patientId
@@ -183,7 +303,7 @@ const PatientConsultations = ({
                           Ver consulta completa
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto p-6" aria-describedby="consultation-details">
                         <DialogHeader>
                           <DialogTitle className="text-lg text-cyan-900 flex items-center gap-2">
                             <Calendar className="h-5 w-5 text-cyan-700" />
@@ -192,7 +312,7 @@ const PatientConsultations = ({
                       })}
                           </DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-4 mt-4">
+                        <div className="space-y-4 mt-4" id="consultation-details">
                           <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100">
                             <Clock className="h-4 w-4" />
                             <span>{format(new Date(consultation.dateTime), "p", {
@@ -224,8 +344,8 @@ const PatientConsultations = ({
                                 Editar
                               </Button>
                             </div>
-                            <div className="bg-cyan-50/50 p-4 rounded-md whitespace-pre-line border border-cyan-100">
-                              {consultation.summary}
+                            <div className="bg-white p-4 rounded-md border border-cyan-100 overflow-x-auto">
+                              {processTextWithTables(consultation.summary)}
                             </div>
                           </div>
                           
@@ -248,7 +368,7 @@ const PatientConsultations = ({
       </Accordion>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent fullWidth className="overflow-y-auto">
+        <DialogContent fullWidth className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto p-6" aria-describedby="consultation-edit">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-cyan-900">
               <PencilLine className="h-5 w-5 text-cyan-700" />
@@ -258,7 +378,7 @@ const PatientConsultations = ({
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 my-4">
+          <div className="space-y-4 my-4" id="consultation-edit">
             {selectedConsultation?.audioUrl && <div>
                 <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
                   <HeartPulse className="h-4 w-4 text-cyan-700" />
