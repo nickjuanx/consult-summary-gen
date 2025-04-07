@@ -1,4 +1,3 @@
-
 import { ApiResponse } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,11 +5,106 @@ import { supabase } from "@/integrations/supabase/client";
 export class GroqApiService {
   private apiKey: string | null = null;
   private baseUrl = "https://api.groq.com/openai/v1";
+  
+  // Dictionary of common medical term corrections
+  private medicalTermCorrections: Record<string, string> = {
+    // Body fluids and tests
+    "olina": "orina",
+    "orinario": "urinario",
+    "urina": "orina",
+    "meado": "orina",
+    "eses": "heces",
+    "defecasion": "defecación",
+    "defecasión": "defecación",
+    "ematocrito": "hematocrito",
+    "emoglobina": "hemoglobina",
+    "emograma": "hemograma",
+    "leucositos": "leucocitos",
+    "eritrosito": "eritrocito",
+    "eritrositos": "eritrocitos",
+    "plaketas": "plaquetas",
+    
+    // Conditions and symptoms
+    "fievre": "fiebre",
+    "artralgia": "artralgia",
+    "artraljas": "artralgias",
+    "mialgia": "mialgia",
+    "mialjas": "mialgias",
+    "diplopia": "diplopía",
+    "gastralgia": "gastralgia",
+    "epigastrio": "epigastrio",
+    "epigastrica": "epigástrica",
+    "ipogastrio": "hipogastrio",
+    "mesogastrio": "mesogastrio",
+    "neusea": "náusea",
+    "nauseas": "náuseas",
+    "vomito": "vómito",
+    "vomitos": "vómitos",
+    "sifalgia": "cefalea",
+    "cefalgia": "cefalea",
+    "ronkido": "ronquido",
+    "ronkidos": "ronquidos",
+    
+    // Systems and organs
+    "epato": "hepato",
+    "igado": "hígado",
+    "reñon": "riñón",
+    "reñones": "riñones",
+    "riñons": "riñones",
+    "pulmon": "pulmón",
+    "pulmones": "pulmones",
+    "intestinales": "intestinales",
+    "estomago": "estómago",
+    "corasón": "corazón",
+    "corazon": "corazón",
+    "kreatinina": "creatinina",
+    
+    // Medications and treatments
+    "paracetamols": "paracetamol",
+    "ibuprofeno": "ibuprofeno",
+    "haspirin": "aspirina",
+    "aspirina": "aspirina",
+    "inyecsión": "inyección",
+    "inyeccion": "inyección",
+    "cirujía": "cirugía",
+    "sirujia": "cirugía",
+    "cirugia": "cirugía",
+    "antibiotico": "antibiótico",
+    "antibioticos": "antibióticos",
+    
+    // Other common medical terms
+    "sintoma": "síntoma",
+    "sintomas": "síntomas",
+    "diagnostico": "diagnóstico",
+    "diagnotico": "diagnóstico",
+    "pronostico": "pronóstico",
+    "analisis": "análisis",
+    "radiografía": "radiografía",
+    "radiografia": "radiografía"
+  };
 
   constructor(apiKey?: string) {
     if (apiKey) {
       this.apiKey = apiKey;
     }
+  }
+
+  // Correct medical terms in a text
+  correctMedicalTerms(text: string): string {
+    if (!text) return text;
+    
+    // Convert to lowercase for comparison
+    let correctedText = text;
+    
+    // Replace each incorrect term with the correct one
+    Object.entries(this.medicalTermCorrections).forEach(([incorrect, correct]) => {
+      // Create a regex that matches the word with word boundaries
+      // The 'gi' flags make it global and case-insensitive
+      const regex = new RegExp(`\\b${incorrect}\\b`, 'gi');
+      correctedText = correctedText.replace(regex, correct);
+    });
+    
+    return correctedText;
   }
 
   async fetchSharedApiKey(): Promise<string | null> {
@@ -77,6 +171,12 @@ export class GroqApiService {
       }
 
       const data = await response.json();
+      
+      // Apply medical term correction to the transcription
+      if (data.text) {
+        data.text = this.correctMedicalTerms(data.text);
+      }
+      
       return { success: true, data };
     } catch (error) {
       console.error("Error de transcripción:", error);
@@ -97,6 +197,9 @@ export class GroqApiService {
     }
 
     try {
+      // Apply medical term correction to the transcription before sending to LLM
+      const correctedTranscription = this.correctMedicalTerms(transcription);
+      
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -112,7 +215,7 @@ export class GroqApiService {
             },
             {
               role: "user",
-              content: transcription
+              content: correctedTranscription
             }
           ],
           temperature: 0.3,
@@ -126,6 +229,12 @@ export class GroqApiService {
       }
 
       const data = await response.json();
+      
+      // Apply any additional corrections to the summary response if needed
+      if (data.choices && data.choices[0]?.message?.content) {
+        data.choices[0].message.content = this.correctMedicalTerms(data.choices[0].message.content);
+      }
+      
       return { success: true, data };
     } catch (error) {
       console.error("Error en la generación del resumen:", error);
