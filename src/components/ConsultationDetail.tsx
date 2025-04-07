@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsultationRecord, Patient } from "@/types";
-import { Download, Clipboard, CheckCircle2, User, PencilLine, Save, X, AlertCircle, Stethoscope, HeartPulse, Activity, Tablet, FileText, ClipboardList, FilePlus2 } from "lucide-react";
+import { Download, Clipboard, CheckCircle2, User, PencilLine, Save, X, AlertCircle, Stethoscope, HeartPulse, Activity, Tablet, FileText, ClipboardList, FilePlus2, Users, TestTube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -68,7 +67,6 @@ const renderMarkdownTable = (markdownTable: string) => {
   }
 };
 
-// Renderizado de secciones médicas con iconos y formato mejorado
 const renderMedicalSection = (title: string, content: string | React.ReactNode, icon: React.ReactNode) => {
   if (!content) return null;
   
@@ -91,26 +89,21 @@ const renderMedicalSection = (title: string, content: string | React.ReactNode, 
   );
 };
 
-// Proceso mejorado para formatear el texto con tablas y secciones
 const processTextWithTables = (text: string) => {
   if (!text) return null;
   
-  // Identificar secciones por titulares en mayúsculas
   const sectionPattern = /\n([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+):\s*\n/g;
   const sections = text.split(sectionPattern);
   
   if (sections.length <= 1) {
-    // Si no hay secciones definidas, procesar como texto plano con posibles tablas
     return processTextContent(text);
   }
   
-  // El primer elemento es el texto antes del primer título
   let result: React.ReactNode[] = [];
   if (sections[0].trim()) {
     result.push(<div key="intro">{processTextContent(sections[0])}</div>);
   }
   
-  // Procesar cada sección con su título
   for (let i = 1; i < sections.length; i += 2) {
     if (i + 1 < sections.length) {
       const sectionTitle = sections[i].trim();
@@ -164,19 +157,15 @@ const processTextWithTables = (text: string) => {
   return result;
 };
 
-// Procesa el contenido del texto, detectando tablas y subsecciones
 const processTextContent = (content: string) => {
   if (!content) return null;
   
-  // Buscar posibles subsecciones con formato "Subtítulo:"
   const parts = content.split(/\n([A-Z][a-zÁ-Úá-ú\s]+):\s*/);
   
   if (parts.length <= 1) {
-    // No hay subsecciones, procesar normalmente
     return processTextParts(content);
   }
   
-  // Procesar con subsecciones
   let result: React.ReactNode[] = [];
   if (parts[0].trim()) {
     result.push(...processTextParts(parts[0]));
@@ -199,14 +188,12 @@ const processTextContent = (content: string) => {
   return result;
 };
 
-// Procesa partes de texto, detectando tablas o texto normal
 const processTextParts = (text: string) => {
   const segments = text.split(/\n\n+/);
   
   return segments.map((segment, index) => {
     if (segment.includes('|') && segment.split('\n').filter(line => line.includes('|')).length >= 2) {
       if (segment.toLowerCase().includes("laboratorio")) {
-        // Resaltar sección de laboratorio
         return (
           <div key={`lab-${index}`} className="my-3">
             <div className="flex items-center gap-2 mb-2">
@@ -220,7 +207,6 @@ const processTextParts = (text: string) => {
       return <div key={`table-${index}`}>{renderMarkdownTable(segment)}</div>;
     }
     
-    // Verificar si es una lista
     if (segment.split('\n').some(line => line.trim().match(/^[•\-\*]\s/))) {
       const listItems = segment.split('\n')
         .filter(line => line.trim())
@@ -567,4 +553,3 @@ const ConsultationDetail = ({ consultation, onBack }: ConsultationDetailProps) =
 };
 
 export default ConsultationDetail;
-
