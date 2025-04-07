@@ -5,15 +5,17 @@ import { getConsultationsByPatient } from "@/lib/storage";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, FileText, Clock, ChevronDown, PencilLine, Save, X } from "lucide-react";
+import { Calendar, FileText, Clock, PencilLine, Save, X, HeartPulse } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { updateConsultation } from "@/lib/storage";
+
 interface PatientConsultationsProps {
   patientId: string;
 }
+
 const PatientConsultations = ({
   patientId
 }: PatientConsultationsProps) => {
@@ -26,7 +28,6 @@ const PatientConsultations = ({
     toast
   } = useToast();
 
-  // Add some console logging to help debug
   console.log("PatientConsultations - Patient ID:", patientId);
   const {
     data: consultations = [],
@@ -39,23 +40,23 @@ const PatientConsultations = ({
     enabled: !!patientId
   });
 
-  // Force a refetch when component mounts to ensure fresh data
   useEffect(() => {
     if (patientId) {
       refetch();
     }
   }, [patientId, refetch]);
 
-  // Log the consultations that were fetched
   useEffect(() => {
     console.log("Consultations fetched:", consultations);
   }, [consultations]);
+
   const handleEditSummary = (consultation: ConsultationRecord) => {
     setEditedSummary(consultation.summary || "");
     setEditMode(consultation.id);
     setSelectedConsultation(consultation);
     setShowEditDialog(true);
   };
+
   const handleSaveSummary = async (consultation: ConsultationRecord) => {
     if (!editedSummary.trim()) {
       toast({
@@ -67,25 +68,21 @@ const PatientConsultations = ({
     }
     setIsSaving(true);
     try {
-      // Create updated consultation object
       const updatedConsultation: ConsultationRecord = {
         ...consultation,
         summary: editedSummary
       };
 
-      // Save to database
       const error = await updateConsultation(updatedConsultation);
       if (error) {
         throw new Error(error);
       }
 
-      // Update local state in the consultations array
       const updatedConsultations = consultations.map(c => c.id === consultation.id ? {
         ...c,
         summary: editedSummary
       } : c);
 
-      // Force a refetch to update the UI
       refetch();
       setEditMode(null);
       setShowEditDialog(false);
@@ -104,34 +101,55 @@ const PatientConsultations = ({
       setIsSaving(false);
     }
   };
+
   const handleCancelEdit = () => {
     setEditMode(null);
     setShowEditDialog(false);
   };
+
   if (isLoading) {
-    return <div className="text-center py-4">Cargando historial de consultas...</div>;
+    return <div className="text-center py-6 bg-gray-50 rounded-lg animate-pulse">
+      <div className="inline-block p-3 rounded-full bg-medical-100">
+        <Clock className="h-5 w-5 text-medical-500" />
+      </div>
+      <p className="mt-2 text-medical-600">Cargando historial de consultas...</p>
+    </div>;
   }
+
   if (error) {
     console.error("Error fetching consultations:", error);
-    return <div className="text-center py-4 text-red-500">Error al cargar historial: {String(error)}</div>;
+    return <div className="text-center py-6 bg-red-50 rounded-lg border border-red-100">
+      <p className="text-red-600">Error al cargar historial: {String(error)}</p>
+    </div>;
   }
+
   if (consultations.length === 0) {
-    return <div className="text-center py-4 text-gray-500">No hay consultas registradas para este paciente.</div>;
+    return <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+      <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+      <p className="text-gray-500">No hay consultas registradas para este paciente.</p>
+    </div>;
   }
+
   return <div className="space-y-4">
-      <h3 className="text-lg font-medium text-cyan-900">Historial de Consultas</h3>
+      <h3 className="text-lg font-medium text-cyan-900 flex items-center gap-2">
+        <HeartPulse className="h-5 w-5 text-cyan-700" />
+        Historial de Consultas
+      </h3>
+      
       <Accordion type="single" collapsible className="w-full">
-        {consultations.map(consultation => <AccordionItem key={consultation.id} value={consultation.id}>
-            <AccordionTrigger className="px-4 py-3 rounded-md bg-cyan-900 hover:bg-cyan-800">
+        {consultations.map(consultation => <AccordionItem key={consultation.id} value={consultation.id} className="mb-3 border-none">
+            <AccordionTrigger className="px-4 py-3 rounded-md bg-gradient-to-r from-cyan-800 to-cyan-900 hover:from-cyan-700 hover:to-cyan-800 shadow-sm transition-all">
               <div className="flex items-center gap-3 text-left">
-                <Calendar className="h-4 w-4 text-gray-500 rounded bg-gray-50" />
+                <div className="p-1.5 rounded-full bg-white/20">
+                  <Calendar className="h-4 w-4 text-cyan-50" />
+                </div>
                 <div>
                   <span className="font-medium text-slate-50">
                     {format(new Date(consultation.dateTime), "PPP", {
                   locale: es
                 })}
                   </span>
-                  <span className="text-sm ml-2 text-slate-50">
+                  <span className="text-sm ml-2 text-slate-50/80">
                     {format(new Date(consultation.dateTime), "p", {
                   locale: es
                 })}
@@ -139,21 +157,21 @@ const PatientConsultations = ({
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-4 pt-2 pb-4">
+            <AccordionContent className="px-4 pt-3 pb-4 mt-2 bg-white rounded-md shadow-sm border border-gray-100">
               <div className="space-y-3">
                 {consultation.summary ? <>
                     <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 mt-1 text-gray-500 bg-slate-50" />
+                      <FileText className="h-4 w-4 mt-1 text-cyan-600" />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <h4 className="font-medium mb-1 text-cyan-900">Resumen:</h4>
-                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-cyan-50 bg-cyan-800 hover:bg-cyan-700">
+                          {editMode !== consultation.id && <Button variant="ghost" size="sm" onClick={() => handleEditSummary(consultation)} className="h-7 px-2 text-cyan-50 bg-cyan-700 hover:bg-cyan-600 shadow-sm">
                               <PencilLine className="h-3.5 w-3.5" />
                               <span className="ml-1 text-xs text-slate-50">Editar</span>
                             </Button>}
                         </div>
                         
-                        <p className="text-sm whitespace-pre-line line-clamp-3 text-cyan-900">
+                        <p className="text-sm whitespace-pre-line line-clamp-3 text-cyan-900 bg-cyan-50/50 p-2 rounded-md">
                           {consultation.summary}
                         </p>
                       </div>
@@ -161,20 +179,21 @@ const PatientConsultations = ({
                     
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="mt-2" onClick={() => setSelectedConsultation(consultation)}>
+                        <Button variant="outline" size="sm" className="mt-2 border-cyan-200 text-cyan-700 hover:bg-cyan-50" onClick={() => setSelectedConsultation(consultation)}>
                           Ver consulta completa
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>
+                          <DialogTitle className="text-lg text-cyan-900 flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-cyan-700" />
                             Consulta del {format(new Date(consultation.dateTime), "PPP", {
                         locale: es
                       })}
                           </DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 mt-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 p-2 rounded-md border border-gray-100">
                             <Clock className="h-4 w-4" />
                             <span>{format(new Date(consultation.dateTime), "p", {
                           locale: es
@@ -182,46 +201,57 @@ const PatientConsultations = ({
                           </div>
                           
                           {consultation.audioUrl && <div className="mt-4">
-                              <h4 className="font-medium mb-2">Audio de la consulta:</h4>
-                              <audio controls className="w-full">
-                                <source src={consultation.audioUrl} type="audio/webm" />
-                                Su navegador no soporta el elemento de audio.
-                              </audio>
+                              <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                                <HeartPulse className="h-4 w-4 text-cyan-700" />
+                                Audio de la consulta:
+                              </h4>
+                              <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
+                                <audio controls className="w-full">
+                                  <source src={consultation.audioUrl} type="audio/webm" />
+                                  Su navegador no soporta el elemento de audio.
+                                </audio>
+                              </div>
                             </div>}
                           
                           <div className="mt-4">
                             <div className="flex justify-between items-center">
-                              <h4 className="font-medium mb-2">Resumen:</h4>
-                              <Button variant="outline" size="sm" onClick={() => handleEditSummary(consultation)}>
+                              <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-cyan-700" />
+                                Resumen:
+                              </h4>
+                              <Button variant="outline" size="sm" onClick={() => handleEditSummary(consultation)} className="border-cyan-200 text-cyan-700 hover:bg-cyan-50">
                                 <PencilLine className="h-4 w-4 mr-1" />
                                 Editar
                               </Button>
                             </div>
-                            <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line">
+                            <div className="bg-cyan-50/50 p-4 rounded-md whitespace-pre-line border border-cyan-100">
                               {consultation.summary}
                             </div>
                           </div>
                           
                           {consultation.transcription && <div className="mt-4">
-                              <h4 className="font-medium mb-2">Transcripción completa:</h4>
-                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto">
+                              <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-cyan-700" />
+                                Transcripción completa:
+                              </h4>
+                              <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[300px] overflow-y-auto border border-gray-200">
                                 {consultation.transcription}
                               </div>
                             </div>}
                         </div>
                       </DialogContent>
                     </Dialog>
-                  </> : <p className="text-sm text-gray-500">No hay resumen disponible para esta consulta.</p>}
+                  </> : <p className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded-md border border-dashed border-gray-200">No hay resumen disponible para esta consulta.</p>}
               </div>
             </AccordionContent>
           </AccordionItem>)}
       </Accordion>
 
-      {/* Large edit dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent fullWidth className="overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-cyan-900">
+              <PencilLine className="h-5 w-5 text-cyan-700" />
               Editar Resumen - {selectedConsultation && format(new Date(selectedConsultation.dateTime), "PPP", {
               locale: es
             })}
@@ -230,32 +260,43 @@ const PatientConsultations = ({
           
           <div className="space-y-4 my-4">
             {selectedConsultation?.audioUrl && <div>
-                <h4 className="font-medium mb-2">Audio de la consulta:</h4>
-                <audio controls className="w-full">
-                  <source src={selectedConsultation.audioUrl} type="audio/webm" />
-                  Su navegador no soporta el elemento de audio.
-                </audio>
+                <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                  <HeartPulse className="h-4 w-4 text-cyan-700" />
+                  Audio de la consulta:
+                </h4>
+                <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
+                  <audio controls className="w-full">
+                    <source src={selectedConsultation.audioUrl} type="audio/webm" />
+                    Su navegador no soporta el elemento de audio.
+                  </audio>
+                </div>
               </div>}
             
             <div>
-              <h4 className="font-medium mb-2">Resumen:</h4>
-              <Textarea value={editedSummary} onChange={e => setEditedSummary(e.target.value)} className="min-h-[300px] text-sm font-mono" placeholder="Edite el resumen aquí..." />
+              <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-cyan-700" />
+                Resumen:
+              </h4>
+              <Textarea value={editedSummary} onChange={e => setEditedSummary(e.target.value)} className="min-h-[300px] text-sm font-mono border-cyan-200 focus-visible:ring-cyan-500" placeholder="Edite el resumen aquí..." />
             </div>
             
             {selectedConsultation?.transcription && <div>
-                <h4 className="font-medium mb-2">Transcripción completa:</h4>
-                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[400px] overflow-y-auto border">
+                <h4 className="font-medium mb-2 text-cyan-900 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-cyan-700" />
+                  Transcripción completa:
+                </h4>
+                <div className="bg-gray-50 p-4 rounded-md whitespace-pre-line text-sm text-gray-700 max-h-[400px] overflow-y-auto border border-gray-200">
                   {selectedConsultation.transcription}
                 </div>
               </div>}
           </div>
           
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving} className="h-10">
+            <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving} className="h-10 border-red-200 text-red-600 hover:bg-red-50">
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
-            <Button variant="default" onClick={() => selectedConsultation && handleSaveSummary(selectedConsultation)} disabled={isSaving} className="h-10">
+            <Button variant="default" onClick={() => selectedConsultation && handleSaveSummary(selectedConsultation)} disabled={isSaving} className="h-10 bg-cyan-700 hover:bg-cyan-600">
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Guardando..." : "Guardar cambios"}
             </Button>
@@ -264,4 +305,5 @@ const PatientConsultations = ({
       </Dialog>
     </div>;
 };
+
 export default PatientConsultations;
