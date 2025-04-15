@@ -14,7 +14,7 @@ export const ensureSharedApiKeysTable = async (): Promise<{ error: string | null
       console.log('Creating shared_api_keys table...');
       
       // Call the RPC function to create the table - it takes no parameters
-      const { error: createError } = await supabase.rpc('create_shared_api_keys_table');
+      const { error: createError } = await supabase.rpc('create_shared_api_keys_table', {});
       
       if (createError) {
         console.error('Error creating shared_api_keys table:', createError);
