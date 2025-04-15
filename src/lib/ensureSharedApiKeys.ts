@@ -13,7 +13,7 @@ export const ensureSharedApiKeysTable = async (): Promise<{ error: string | null
     if (checkError && checkError.message.includes('relation "public.shared_api_keys" does not exist')) {
       console.log('Creating shared_api_keys table...');
       
-      // Call the RPC function to create the table - fixed type error by using proper parameters
+      // Call the RPC function to create the table with an empty object as parameter
       const { error: createError } = await supabase.rpc('create_shared_api_keys_table', {});
       
       if (createError) {
